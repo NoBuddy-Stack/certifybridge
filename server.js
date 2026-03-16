@@ -12,21 +12,28 @@ import { pathToFileURL, fileURLToPath } from 'url';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 
-// ── Pre-load all API handlers once at startup ─────────────────────────────────
+// ── Pre-load all API handlers recursively at startup ────────────────────────
 const handlers = {};
 const apiDir   = path.join(__dir, 'api');
 
-for (const file of fs.readdirSync(apiDir).filter(f => f.endsWith('.js'))) {
-  const name    = file.replace('.js', '');
-  const fileUrl = pathToFileURL(path.join(apiDir, file)).href;
-  try {
-    const mod = await import(fileUrl);
-    handlers[name] = mod.default;
-    console.log(`✓ Loaded api/${file}`);
-  } catch (err) {
-    console.error(`✗ Failed to load api/${file}:`, err.message);
+async function loadHandlers(dir, prefix) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      await loadHandlers(path.join(dir, entry.name), prefix + entry.name + '/');
+    } else if (entry.name.endsWith('.js')) {
+      const name    = prefix + entry.name.replace('.js', '');
+      const fileUrl = pathToFileURL(path.join(dir, entry.name)).href;
+      try {
+        const mod = await import(fileUrl);
+        handlers[name] = mod.default;
+        console.log(`✓ Loaded api/${name}.js`);
+      } catch (err) {
+        console.error(`✗ Failed to load api/${name}.js:`, err.message);
+      }
+    }
   }
 }
+await loadHandlers(apiDir, '');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const MIME = {
@@ -78,7 +85,30 @@ http.createServer(async (req, res) => {
   // API routes
   if (pathname.startsWith('/api/')) {
     const name = pathname.slice(5).replace(/\/+$/, '') || 'index';
-    const fn   = handlers[name];
+
+    // Resolve handler: try exact match first, then dynamic [param] segments
+    let fn    = handlers[name];
+    const dynQuery = {}; // populated by dynamic segment matching
+
+    if (!fn) {
+      // Try matching dynamic routes: e.g. "admin/applications/abc123"
+      // against handler "admin/applications/[id]"
+      const segments = name.split('/');
+      for (const handlerName of Object.keys(handlers)) {
+        const hSegs = handlerName.split('/');
+        if (hSegs.length !== segments.length) continue;
+        let match = true;
+        for (let i = 0; i < hSegs.length; i++) {
+          if (hSegs[i].startsWith('[') && hSegs[i].endsWith(']')) {
+            dynQuery[hSegs[i].slice(1, -1)] = segments[i];
+          } else if (hSegs[i] !== segments[i]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) { fn = handlers[handlerName]; break; }
+      }
+    }
 
     if (!fn) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -97,7 +127,8 @@ http.createServer(async (req, res) => {
           try { body = JSON.parse(raw.toString('utf8')); } catch { body = {}; }
         }
       }
-      const reqShim = Object.assign(req, { body, query: Object.fromEntries(url.searchParams) });
+      const query = { ...Object.fromEntries(url.searchParams), ...dynQuery };
+      const reqShim = Object.assign(req, { body, query });
       await fn(reqShim, makeRes(res));
     } catch (err) {
       console.error(`[api/${name}]`, err.message);
@@ -112,9 +143,11 @@ http.createServer(async (req, res) => {
   // Static files
   let filePath = pathname === '/apply'
     ? path.join(PUBLIC, 'apply.html')
-    : pathname === '/'
-      ? path.join(PUBLIC, 'index.html')
-      : path.join(PUBLIC, pathname);
+    : pathname === '/admin'
+      ? path.join(PUBLIC, 'admin.html')
+      : pathname === '/'
+        ? path.join(PUBLIC, 'index.html')
+        : path.join(PUBLIC, pathname);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const mime = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
@@ -129,6 +162,7 @@ http.createServer(async (req, res) => {
   console.log('');
   console.log('  ● CertifyBridge — Dev Server');
   console.log(`  http://localhost:${PORT}             → apply form`);
+  console.log(`  http://localhost:${PORT}/admin       → admin dashboard`);
   console.log(`  http://localhost:${PORT}/api/health  → health check`);
   console.log('');
   console.log('  Press Ctrl+C to stop.');
