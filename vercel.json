@@ -2,30 +2,52 @@
   "version": 2,
   "regions": ["bom1"],
   "routes": [
-    { "src": "/", "dest": "/public/apply.html" },
+    { "src": "/",      "dest": "/public/apply.html" },
     { "src": "/apply", "dest": "/public/apply.html" }
   ],
   "functions": {
-    "api/**": { "maxDuration": 10 }
+    "api/config.js":         { "maxDuration": 3  },
+    "api/health.js":         { "maxDuration": 5  },
+    "api/application.js":    { "maxDuration": 5  },
+    "api/create-order.js":   { "maxDuration": 10 },
+    "api/verify-payment.js": { "maxDuration": 10 },
+    "api/webhook.js":        { "maxDuration": 10 }
   },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options",        "value": "DENY" },
-        { "key": "Referrer-Policy",         "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy",      "value": "camera=(), microphone=(), geolocation=()" }
+        { "key": "X-Content-Type-Options",       "value": "nosniff" },
+        { "key": "X-Frame-Options",              "value": "DENY" },
+        { "key": "Referrer-Policy",              "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy",           "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security",    "value": "max-age=63072000; includeSubDomains; preload" }
       ]
     },
     {
-      "source": "/public/(.*)",
+      "source": "/(|apply)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.razorpay.com; frame-src https://api.razorpay.com; img-src 'self' data:"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.razorpay.com; frame-src https://api.razorpay.com; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'"
         }
       ]
+    },
+    {
+      "source": "/bg.jpg",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/logo.png",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/favicon.jpg",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+    },
+    {
+      "source": "/apply.html",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }
   ]
 }

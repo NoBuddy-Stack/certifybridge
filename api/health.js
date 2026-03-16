@@ -9,7 +9,7 @@
  * Safe to expose publicly: only boolean presence checks, no sensitive values.
  */
 
-import clientPromise from '../lib/mongodb.js';
+import clientPromise, { DB_NAME } from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         setTimeout(() => reject(new Error('MongoDB connection timeout')), 3000)
       ),
     ]);
-    await client.db('certifybridge').command({ ping: 1 });
+    await client.db(DB_NAME).command({ ping: 1 });
     checks.mongodb = 'ok';
   } catch (err) {
     checks.mongodb = 'error: ' + err.message;

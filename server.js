@@ -1,7 +1,8 @@
 /**
  * server.js — Local development server
  * Serves static files from /public and routes /api/* to api/*.js handlers.
- * Usage: node server.js
+ * Usage: npm run dev   (loads .env via --env-file flag, Node 20.6+)
+ *    or: node server.js (if .env is already in env)
  */
 
 import http from 'http';
@@ -9,22 +10,7 @@ import fs   from 'fs';
 import path from 'path';
 import { pathToFileURL, fileURLToPath } from 'url';
 
-// ── Load .env ─────────────────────────────────────────────────────────────────
-const __dir   = path.dirname(fileURLToPath(import.meta.url));
-const envFile = path.join(__dir, '.env');
-
-if (fs.existsSync(envFile)) {
-  for (const line of fs.readFileSync(envFile, 'utf8').split('\n')) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const eq = t.indexOf('=');
-    if (eq === -1) continue;
-    const k = t.slice(0, eq).trim();
-    const v = t.slice(eq + 1).trim();
-    if (k && !process.env[k]) process.env[k] = v;
-  }
-  console.log('✓ Loaded .env');
-}
+const __dir = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Pre-load all API handlers once at startup ─────────────────────────────────
 const handlers = {};
@@ -54,11 +40,11 @@ const MIME = {
   '.ico':  'image/x-icon',
 };
 
-function readBody(req) {
+function readRawBody(req) {
   return new Promise((resolve, reject) => {
-    let raw = '';
-    req.on('data', c => { raw += c; });
-    req.on('end',  () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve({}); } });
+    const chunks = [];
+    req.on('data', c => { chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)); });
+    req.on('end',  () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
 }
@@ -100,7 +86,17 @@ http.createServer(async (req, res) => {
     }
 
     try {
-      const body   = ['POST', 'PUT', 'PATCH'].includes(req.method) ? await readBody(req) : {};
+      // Check if handler opts out of JSON body parsing (e.g. webhook needs raw bytes for HMAC)
+      const bodyParserOff = fn?.config?.api?.bodyParser === false;
+      let body = {};
+      if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+        const raw = await readRawBody(req);
+        if (bodyParserOff) {
+          body = raw; // pass Buffer directly
+        } else if (raw.length > 0) {
+          try { body = JSON.parse(raw.toString('utf8')); } catch { body = {}; }
+        }
+      }
       const reqShim = Object.assign(req, { body, query: Object.fromEntries(url.searchParams) });
       await fn(reqShim, makeRes(res));
     } catch (err) {
@@ -114,9 +110,11 @@ http.createServer(async (req, res) => {
   }
 
   // Static files
-  let filePath = (pathname === '/' || pathname === '/apply')
+  let filePath = pathname === '/apply'
     ? path.join(PUBLIC, 'apply.html')
-    : path.join(PUBLIC, pathname);
+    : pathname === '/'
+      ? path.join(PUBLIC, 'index.html')
+      : path.join(PUBLIC, pathname);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const mime = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';

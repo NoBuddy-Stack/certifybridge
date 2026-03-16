@@ -3,32 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply for Internship — CertifyBridge</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Apply — CertifyBridge</title>
     <link rel="icon" type="image/jpeg" href="/favicon.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <!-- EmailJS removed — confirmation emails are now sent server-side via Resend -->
+    <link rel="preload" as="image" href="/bg.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Inter+Display:wght@700&family=Fragment+Mono&display=swap" rel="stylesheet">
+    <script defer src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
-            --bg: #000000;
-            --bg-card: #ffffff08;
-            --bg-hover: #ffffff12;
-            --border: #ffffff1a;
-            --text: #ffffff;
-            --muted: #ffffffb3;
-            --dim: #ffffff55;
-            --accent: #0000ee;
-            --red: #ff2d2d;
-            --font: 'Times New Roman', Times, serif;
-            --mono: 'Geist Mono', monospace;
-            --r: 8px;
-            --rl: 16px;
+            --bg:        #080808;
+            --bg-card:   rgba(255,255,255,0.03);
+            --bg-hover:  rgba(255,255,255,0.06);
+            --border:    rgba(255,255,255,0.1);
+            --border-hi: rgba(255,255,255,0.55);
+            --text:      #ffffff;
+            --muted:     rgba(255,255,255,0.55);
+            --dim:       rgba(255,255,255,0.30);
+            --red:       #ff4444;
+            --font:      'Inter', sans-serif;
+            --mono:      'Fragment Mono', monospace;
         }
-
         html { scroll-behavior: smooth; }
         body {
             font-family: var(--font);
@@ -38,383 +34,296 @@
             -webkit-font-smoothing: antialiased;
             line-height: 1.6;
         }
+        /* Fixed background via pseudo-element avoids background-attachment:fixed
+           compositing cost on mobile during scroll */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url('/bg.jpg');
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            z-index: -1;
+        }
 
-        /* ─── NAV ─── */
+        /* ── NAV ── */
         nav {
-            position: fixed; top: 0; left: 0; right: 0;
-            height: 64px;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+            position: fixed; top: 0; left: 0; right: 0; height: 58px;
+            background: rgba(8,8,8,0.35);
+            backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 40px; z-index: 100;
+            padding: 0 48px; z-index: 100;
         }
-        .nav-logo {
-            font-size: 18px; font-weight: 700; color: var(--text);
-            text-decoration: none; display: flex; align-items: center; gap: 8px;
-        }
-        .nav-dot {
-            width: 8px; height: 8px; background: var(--accent);
-            border-radius: 50%; box-shadow: 0 0 10px var(--accent);
-        }
-        .nav-tag { font-size: 12px; color: var(--dim); }
+        .nav-logo { display: flex; align-items: center; text-decoration: none; color: var(--text); gap: 0; }
+        .nav-links { display: flex; align-items: center; gap: 36px; }
+        .nav-links a { font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); text-decoration: none; letter-spacing: 0.06em; transition: color .2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta { font-family: var(--mono); font-size: 12px; color: var(--text); background: transparent; text-decoration: none; letter-spacing: 0.06em; padding: 9px 20px; border: 1px solid rgba(255,255,255,0.4); transition: all .2s; }
+        .nav-cta:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.7); }
 
-        /* ─── LAYOUT ─── */
-        main { padding-top: 64px; }
-        .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 80px; }
+        /* ── LAYOUT ── */
+        main { padding-top: 58px; }
+        .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 120px; }
 
-        /* ─── HEADER ─── */
-        .hdr { text-align: center; margin-bottom: 48px; }
-        .badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(0,0,238,0.07); border: 1px solid rgba(0,0,238,0.2);
-            color: var(--accent); font-size: 11px; font-weight: 600;
-            padding: 5px 14px; border-radius: 100px; margin-bottom: 20px;
-            letter-spacing: 1px; text-transform: uppercase;
-        }
-        .hdr h1 {
-            font-size: 44px; font-weight: 900; line-height: 1.05;
-            margin-bottom: 14px; letter-spacing: -1.5px;
-        }
-        .hdr h1 .ac { color: var(--accent); }
-        .hdr p { color: var(--muted); font-size: 16px; max-width: 460px; margin: 0 auto; }
+        /* ── HERO ── */
+        .hero { text-align: center; margin-bottom: 36px; padding-bottom: 36px; border-bottom: 1px solid var(--border); }
+        .hero-tag { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 16px; display: block; text-transform: uppercase; }
+        .hero h1 { font-family: 'Inter Display', 'Inter', sans-serif; font-size: clamp(36px, 5.5vw, 72px); font-weight: 800; font-style: normal; line-height: 1.0; letter-spacing: -0.02em; color: #ffffff; margin-bottom: 16px; text-transform: uppercase; text-shadow: 0 0 40px rgba(0,0,0,0.8), 0 2px 12px rgba(0,0,0,0.6); }
+        .hero-sub { font-family: var(--mono); font-size: 14px; color: rgba(255,255,255,0.8); letter-spacing: 0em; line-height: 1.5; text-transform: uppercase; margin-bottom: 0; }
 
-        /* ─── PROGRESS ─── */
-        .prog { margin-bottom: 48px; }
-        .steps { display: flex; align-items: center; justify-content: center; }
-        .step { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .sc {
-            width: 38px; height: 38px; border-radius: 50%;
-            border: 2px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700; color: var(--dim);
-            background: var(--bg); transition: all .3s; z-index: 2;
-        }
-        .step.active .sc { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 20px rgba(0,0,238,.25); }
-        .step.done .sc   { border-color: var(--accent); background: var(--accent); color: #000; }
-        .sl {
-            font-size: 11px; font-weight: 500; color: var(--dim);
-            text-transform: uppercase; letter-spacing: .6px; white-space: nowrap;
-        }
-        .step.active .sl { color: var(--accent); }
-        .step.done .sl   { color: var(--muted); }
-        .conn {
-            width: 72px; height: 2px; background: var(--border);
-            margin: 0 6px 26px; transition: background .3s;
-        }
-        .conn.done { background: var(--accent); }
+        /* ── PROGRESS ── */
+        .prog { display: flex; align-items: center; justify-content: center; margin-bottom: 40px; gap: 0; }
+        .step-item { display: flex; align-items: center; gap: 10px; }
+        .step-num { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.08em; transition: color .3s; }
+        .step-label { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.08em; transition: color .3s; white-space: nowrap; }
+        .step-item.active .step-num, .step-item.active .step-label { color: var(--text); }
+        .step-item.done .step-num, .step-item.done .step-label { color: rgba(255,255,255,0.3); }
+        .step-conn { width: 48px; height: 1px; background: rgba(255,255,255,0.1); margin: 0 16px; flex-shrink: 0; transition: background .3s; }
+        .step-conn.done { background: rgba(255,255,255,0.3); }
 
-        /* ─── STEPS ─── */
-        .fs { display: none; animation: fu .25s ease; }
+        /* ── FORM STEPS ── */
+        .fs { display: none; animation: fadeUp .2s ease; }
         .fs.active { display: block; }
-        @keyframes fu { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
 
-        .sec-t { font-size: 22px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 4px; }
-        .sec-s { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+        /* ── SECTION HEADER ── */
+        .sec-hdr { margin-bottom: 40px; }
+        .sec-tag { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 12px; display: block; }
+        .sec-hdr h2 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; line-height: 1.1; }
+        .sec-hdr p { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        /* ─── FORM ─── */
-        .r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        /* ── FORM FIELDS ── */
+        .r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
         .fg { margin-bottom: 20px; }
-        .fg label {
-            display: block; font-size: 12px; font-weight: 600; color: var(--muted);
-            margin-bottom: 8px; text-transform: uppercase; letter-spacing: .6px;
-        }
-        .req { color: var(--accent); }
-        .opt { color: var(--dim); font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
-        .fc {
-            width: 100%; background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); color: var(--text); font-family: var(--font);
-            font-size: 15px; padding: 12px 16px; outline: none; transition: all .2s;
-            -webkit-appearance: none; appearance: none;
-        }
-        .fc::placeholder { color: var(--dim); }
-        .fc:focus { border-color: var(--accent); background: rgba(0,0,238,.04); box-shadow: 0 0 0 3px rgba(0,0,238,.1); }
-        .fc.err { border-color: var(--red); box-shadow: 0 0 0 3px rgba(255,45,45,.1); }
-        textarea.fc { resize: vertical; min-height: 108px; }
-        .em { font-size: 12px; color: var(--red); margin-top: 5px; display: none; }
+        .fg label { display: block; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.75); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.14em; }
+        .req { color: rgba(255,255,255,0.4); }
+        .opt { color: var(--dim); font-size: 9px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+        .fc { width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 13px 16px; outline: none; transition: all .2s; -webkit-appearance: none; appearance: none; border-radius: 0; }
+        .fc::placeholder { color: rgba(255,255,255,0.2); font-size: 12px; }
+        .fc:focus { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); }
+        .fc.err { border-color: var(--red); }
+        textarea.fc { resize: vertical; min-height: 96px; }
+        .em { font-family: var(--mono); font-size: 11px; color: var(--red); margin-top: 6px; display: none; letter-spacing: 0.04em; }
         .em.show { display: block; }
 
-        /* ─── PRIVACY BOX ─── */
-        .priv {
-            display: flex; align-items: flex-start; gap: 10px;
-            background: rgba(0,0,238,.05); border: 1px solid rgba(0,0,238,.15);
-            border-radius: var(--r); padding: 12px 14px; margin-top: 10px;
-        }
-        .priv .pi { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
-        .priv p { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
-        .priv p strong { color: var(--accent); font-weight: 600; }
+        /* ── PRIVACY NOTE ── */
+        .priv-note { display: flex; align-items: flex-start; gap: 12px; border: 1px solid var(--border); padding: 14px 16px; margin-top: 12px; background: rgba(255,255,255,0.02); }
+        .priv-note .pi { flex-shrink: 0; margin-top: 2px; opacity: 0.5; }
+        .priv-note p { font-family: var(--mono); font-size: 10px; color: var(--dim); line-height: 1.75; letter-spacing: 0.04em; }
+        .priv-note p strong { color: rgba(255,255,255,0.6); }
 
-        /* ─── DATES ─── */
+        /* ── DATES ── */
         .dg { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
-        .dur {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 14px; border-radius: 100px;
-            font-size: 13px; font-weight: 500; margin-top: 8px; transition: all .2s;
-        }
-        .dur.ok  { background: rgba(0,0,238,.08); border: 1px solid rgba(0,0,238,.25); color: var(--accent); }
-        .dur.bad { background: rgba(255,45,45,.08); border: 1px solid rgba(255,45,45,.25); color: var(--red); }
-        .dur.hi  { display: none; }
+        .dur-pill { display: none; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; padding: 6px 0; }
+        .dur-pill.show { display: block; }
+        .dur-pill.ok  { color: rgba(255,255,255,0.55); }
+        .dur-pill.bad { color: var(--red); }
 
-        /* ─── DOMAIN GRID ─── */
-        .dgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 6px; }
-        .dc {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); padding: 11px 12px; cursor: pointer;
-            transition: all .2s; display: flex; align-items: center; gap: 8px;
-            font-size: 13px; font-weight: 500; color: var(--muted); user-select: none;
-        }
-        .dc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); color: var(--text); }
-        .dc.sel   { background: rgba(0,0,238,.06); border-color: var(--accent); color: var(--accent); }
-        .dc.cust  { border-style: dashed; color: var(--dim); justify-content: center; font-style: italic; }
+        /* ── DOMAIN GRID ── */
+        .dgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 6px; }
+        .dc { background: var(--bg-card); border: 1px solid var(--border); padding: 12px 10px; cursor: pointer; transition: all .2s; font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; text-align: center; user-select: none; }
+        .dc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); color: var(--muted); }
+        .dc.sel { border-color: var(--border-hi); color: var(--text); background: rgba(255,255,255,0.05); }
+        .dc.cust { border-style: dashed; }
         .dc.cust.sel { border-style: solid; }
-        .di { font-size: 15px; flex-shrink: 0; }
 
-        /* ─── MODE ─── */
-        .mgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 12px; }
-        .mc {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); padding: 18px 12px; cursor: pointer;
-            transition: all .2s; text-align: center; user-select: none;
-        }
-        .mc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); }
-        .mc.sel   { background: rgba(0,0,238,.06); border-color: var(--accent); }
-        .mi { font-size: 26px; margin-bottom: 8px; }
-        .mn { font-size: 14px; font-weight: 700; }
-        .md { font-size: 11px; color: var(--dim); margin-top: 2px; }
-        .mc.sel .mn { color: var(--accent); }
+        /* ── MODE CARDS ── */
+        .mgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+        .mc { background: var(--bg-card); border: 1px solid var(--border); padding: 24px 14px 20px; cursor: pointer; transition: all .2s; text-align: center; user-select: none; position: relative; }
+        .mc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); }
+        .mc.sel { border-color: var(--border-hi); background: rgba(255,255,255,0.05); }
+        .mc.sel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
+        .mc.sel::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .mc-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--dim); }
+        .mc.sel .mc-icon { color: var(--text); }
+        .mc-name { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .mc.sel .mc-name { color: var(--text); }
+        .mc-desc { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 4px; letter-spacing: 0.04em; }
 
-        /* ─── LOCATION ─── */
-        .loc {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); padding: 16px; margin-bottom: 20px; display: none;
-        }
-        .loc.show { display: block; }
-        .loc .ll {
-            font-size: 12px; font-weight: 600; color: var(--muted);
-            text-transform: uppercase; letter-spacing: .6px;
-            margin-bottom: 12px; display: block;
-        }
-        .cw { display: flex; flex-wrap: wrap; gap: 8px; }
-        .cc {
-            background: rgba(255,255,255,.05); border: 1px solid var(--border);
-            border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 500;
-            color: var(--muted); cursor: pointer; transition: all .2s; user-select: none;
-        }
-        .cc:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
-        .cc.sel   { background: rgba(0,0,238,.08); border-color: var(--accent); color: var(--accent); }
+        /* ── CITY ── */
+        .loc-box { border: 1px solid var(--border); padding: 16px; margin-bottom: 18px; display: none; }
+        .loc-box.show { display: block; }
+        .loc-label { display: block; font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.14em; }
+        .city-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+        .city-pill { background: transparent; border: 1px solid var(--border); padding: 7px 18px; font-family: var(--mono); font-size: 11px; color: var(--dim); cursor: pointer; transition: all .2s; user-select: none; letter-spacing: 0.08em; }
+        .city-pill:hover { border-color: rgba(255,255,255,0.3); color: var(--muted); }
+        .city-pill.sel { border-color: var(--border-hi); color: var(--text); }
 
-        /* ─── STIPEND ─── */
-        .sgrid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 20px; }
-        .sch {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); padding: 10px 6px; text-align: center;
-            font-size: 12px; font-weight: 600; color: var(--muted);
-            cursor: pointer; transition: all .2s; user-select: none;
-        }
-        .sch:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); color: var(--text); }
-        .sch.sel   { background: rgba(0,0,238,.06); border-color: var(--accent); color: var(--accent); }
+        /* ── STIPEND ── */
+        .sgrid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 18px; }
+        .sch { background: var(--bg-card); border: 1px solid var(--border); padding: 11px 4px; text-align: center; font-family: var(--mono); font-size: 10px; color: var(--dim); cursor: pointer; transition: all .2s; user-select: none; letter-spacing: 0.04em; }
+        .sch:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); color: var(--muted); }
+        .sch.sel { border-color: var(--border-hi); color: var(--text); background: rgba(255,255,255,0.05); }
 
-        /* ─── BUTTONS ─── */
-        .nav-b {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);
-        }
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            gap: 8px; padding: 12px 28px; border-radius: var(--r);
-            font-family: var(--font); font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: all .2s; border: none; outline: none;
-        }
-        .btn-p  { background: var(--accent); color: #000; }
-        .btn-p:hover { background: #0000cc; box-shadow: 0 0 28px rgba(0,0,238,.35); transform: translateY(-1px); }
-        .btn-g  { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-        .btn-g:hover { border-color: rgba(255,255,255,.3); color: var(--text); }
+        /* ── NAV BUTTONS ── */
+        .nav-b { display: flex; align-items: center; justify-content: space-between; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); }
+        .btn-bracket { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; transition: all .2s; outline: none; text-transform: uppercase; }
+        .btn-bracket::before { content: ''; position: absolute; top: -2px; left: -2px; width: 10px; height: 10px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
+        .btn-bracket::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .btn-bracket:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.6); }
+        .btn-bracket:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 14px 16px; background: transparent; border: none; color: var(--dim); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; transition: color .2s; outline: none; text-transform: uppercase; }
+        .btn-ghost:hover { color: var(--muted); }
 
-        /* ─── PLAN CARDS ─── */
-        .ph { text-align: center; margin-bottom: 32px; }
-        .ph h2 { font-size: 30px; font-weight: 900; letter-spacing: -.8px; margin-bottom: 8px; }
-        .ph p  { color: var(--muted); font-size: 15px; }
+        /* ── PLAN SECTION ── */
+        .plan-hdr { text-align: center; margin-bottom: 48px; }
+        .plan-hdr h2 { font-size: clamp(28px, 5vw, 48px); font-weight: 900; letter-spacing: -0.03em; margin-bottom: 12px; line-height: 1.05; }
+        .plan-hdr p { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        .pgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
-        .pcard {
-            background: var(--bg-card); border: 2px solid var(--border);
-            border-radius: var(--rl); padding: 24px 20px; cursor: pointer;
-            transition: all .25s; position: relative; overflow: hidden; user-select: none;
-        }
-        .pcard::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: transparent; transition: background .3s;
-        }
-        .pcard:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.2); transform: translateY(-3px); }
-        .pcard.sel {
-            border-color: var(--accent); background: rgba(0,0,238,.05);
-            box-shadow: 0 0 48px rgba(0,0,238,.1), 0 8px 32px rgba(0,0,0,.5);
-            transform: translateY(-3px);
-        }
-        .pcard.sel::after { background: var(--accent); }
-        .pop {
-            display: inline-block; background: var(--accent); color: #000;
-            font-size: 10px; font-weight: 700; padding: 3px 8px;
-            border-radius: 100px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
-        }
-        .pn  { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
-        .pcard.sel .pn { color: var(--accent); }
-        .pp  { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; margin: 12px 0; }
-        .pp sup { font-size: 18px; vertical-align: top; margin-top: 7px; display: inline-block; font-weight: 700; }
+        /* ── PLAN CARDS ── */
+        .pgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; align-items: end; margin-bottom: 32px; }
+        .pcard { background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 28px 22px; cursor: pointer; transition: all .25s; user-select: none; position: relative; }
+        .pcard + .pcard { border-left: none; }
+        .pcard:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.22); }
+        .pcard:hover + .pcard { border-left: none; }
+        .pcard.featured { border-color: rgba(255,255,255,0.22); padding: 40px 22px; margin: -16px 0; background: #0f0f0f; z-index: 1; border-left: 1px solid rgba(255,255,255,0.22); border-right: 1px solid rgba(255,255,255,0.22); }
+        .pcard.sel { border-color: var(--border-hi) !important; background: rgba(255,255,255,0.05); }
+        .pcard.sel + .pcard { border-left: none; }
+        .pcard.sel::before { content: ''; position: absolute; top: -2px; left: -2px; width: 14px; height: 14px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
+        .pcard.sel::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .plan-tier { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.12em; margin-bottom: 12px; }
+        .plan-price { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; line-height: 1; }
+        .plan-price sup { font-size: 20px; vertical-align: top; margin-top: 10px; display: inline-block; font-weight: 700; }
+        .plan-desc { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.04em; margin-bottom: 20px; line-height: 1.65; }
+        .plan-btn { display: block; width: 100%; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; padding: 13px; border: 1px solid rgba(255,255,255,0.3); color: var(--text); background: transparent; cursor: pointer; margin-bottom: 22px; transition: all .2s; }
+        .plan-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.6); }
+        .pcard.featured .plan-btn { background: var(--text); color: var(--bg); border-color: var(--text); }
+        .pcard.featured .plan-btn:hover { background: rgba(255,255,255,0.88); }
+        .pcard.sel .plan-btn { background: var(--text); color: var(--bg); border-color: var(--text); }
         .pdiv { height: 1px; background: var(--border); margin: 16px 0; }
-        .pf   { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-        .pf li {
-            display: flex; align-items: flex-start; gap: 8px;
-            font-size: 13px; color: var(--muted); line-height: 1.4;
-        }
-        .ck { color: var(--accent); flex-shrink: 0; font-size: 13px; margin-top: 1px; }
-        .pcard.sel .pf li { color: var(--text); }
+        .plan-feats-label { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 14px; display: block; }
+        .plan-feats { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+        .plan-feats li { display: flex; align-items: flex-start; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.5; letter-spacing: 0.03em; }
+        .pcard.sel .plan-feats li, .pcard.featured .plan-feats li { color: var(--muted); }
+        .feat-chk { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.25); margin-top: 1px; position: relative; }
+        .feat-chk svg { width: 8px; height: 8px; opacity: 0.5; }
+        .pcard.sel .feat-chk, .pcard.featured .feat-chk { border-color: rgba(255,255,255,0.5); }
+        .pcard.sel .feat-chk svg, .pcard.featured .feat-chk svg { opacity: 0.9; }
 
-        /* ─── ORDER SUMMARY ─── */
-        .osb {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--r); padding: 20px; margin-bottom: 20px; display: none;
-        }
-        .osb h4 {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .8px; color: var(--dim); margin-bottom: 14px;
-        }
-        .or {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 9px 0; font-size: 14px; border-bottom: 1px solid var(--border);
-        }
+        /* ── ORDER SUMMARY ── */
+        .osb { border: 1px solid var(--border); padding: 22px; margin-bottom: 22px; display: none; position: relative; }
+        .osb::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 1px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.3); }
+        .osb::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-bottom: 1px solid rgba(255,255,255,0.3); border-right: 1px solid rgba(255,255,255,0.3); }
+        .osb-title { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 16px; }
+        .or { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
         .or:last-child { border-bottom: none; }
-        .ol { color: var(--muted); }
-        .ov { font-weight: 600; }
-        .ov.g { color: var(--accent); font-size: 16px; }
+        .ol { color: var(--dim); letter-spacing: 0.06em; }
+        .ov { color: var(--text); }
+        .ov.total { font-size: 16px; font-weight: 700; }
 
-        /* ─── PAY BTN ─── */
-        .paybtn {
-            width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
-            background: var(--accent); color: #000; border: none;
-            border-radius: var(--r); cursor: pointer; font-family: var(--font);
-            transition: all .2s; display: flex; align-items: center;
-            justify-content: center; gap: 10px;
-        }
-        .paybtn:hover { background: #0000cc; box-shadow: 0 0 40px rgba(0,0,238,.45); transform: translateY(-1px); }
-        .paybtn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
-        .pay-note { text-align: center; font-size: 12px; color: var(--dim); margin-top: 10px; }
-        .perr { font-size: 13px; color: var(--red); margin-bottom: 12px; display: none; }
+        /* ── PAY ── */
+        .perr { font-family: var(--mono); font-size: 11px; color: var(--red); margin-bottom: 14px; display: none; letter-spacing: 0.06em; }
         .perr.show { display: block; }
-        .consent-label {
-            display: flex; align-items: flex-start; gap: 10px;
-            font-size: 13px; color: var(--muted); line-height: 1.5;
-            margin-bottom: 12px; cursor: pointer;
-        }
-        .consent-label input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
+        .consent-wrap { display: flex; align-items: flex-start; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.7; margin-bottom: 16px; letter-spacing: 0.04em; cursor: pointer; }
+        .consent-wrap input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: #fff; cursor: pointer; }
+        .consent-wrap a { color: rgba(255,255,255,0.45); }
+        .pay-btn { width: 100%; position: relative; padding: 17px; font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--text); color: #000; border: none; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .pay-btn::before { content: ''; position: absolute; top: -3px; left: -3px; width: 12px; height: 12px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
+        .pay-btn::after  { content: ''; position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .pay-btn:hover { background: rgba(255,255,255,0.9); }
+        .pay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .pay-note { font-family: var(--mono); font-size: 10px; color: var(--dim); text-align: center; margin-top: 14px; letter-spacing: 0.08em; }
 
-        /* ─── DIALOG ─── */
-        .ov-bg {
-            position: fixed; inset: 0; background: rgba(0,0,0,.75);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 200; display: flex; align-items: center; justify-content: center;
-            padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s;
-        }
+        /* ── DIALOG ── */
+        .ov-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s; }
         .ov-bg.open { opacity: 1; pointer-events: all; }
-        .dlg {
-            background: #0e0e0e; border: 1px solid rgba(255,255,255,.12);
-            border-radius: var(--rl); padding: 32px; width: 100%; max-width: 460px;
-            transform: scale(.94) translateY(10px); transition: transform .22s;
-        }
+        .dlg { background: #0c0c0c; border: 1px solid rgba(255,255,255,0.12); padding: 36px; width: 100%; max-width: 440px; transform: scale(.95) translateY(12px); transition: transform .22s; position: relative; }
+        .dlg::before { content: ''; position: absolute; top: -1px; left: -1px; width: 14px; height: 14px; border-top: 1px solid rgba(255,255,255,0.4); border-left: 1px solid rgba(255,255,255,0.4); }
+        .dlg::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 14px; height: 14px; border-bottom: 1px solid rgba(255,255,255,0.4); border-right: 1px solid rgba(255,255,255,0.4); }
         .ov-bg.open .dlg { transform: scale(1) translateY(0); }
-        .dlg h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-        .dlg .ds { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
-        .da { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .dlg-tag { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 14px; display: block; }
+        .dlg h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.03em; }
+        .dlg .ds { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-bottom: 24px; line-height: 1.75; letter-spacing: 0.04em; }
+        .da { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
 
-        /* ─── SUCCESS ─── */
-        .sov {
-            position: fixed; inset: 0; background: rgba(0,0,0,.92);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            z-index: 300; display: flex; align-items: center; justify-content: center;
-            padding: 24px; opacity: 0; pointer-events: none; transition: opacity .3s;
-        }
+        /* ── SUCCESS ── */
+        .sov { position: fixed; inset: 0; background: rgba(0,0,0,0.93); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .3s; }
         .sov.open { opacity: 1; pointer-events: all; }
-        .sbox {
-            background: #080808; border: 1px solid rgba(0,0,238,.25);
-            border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 520px;
-            text-align: center; box-shadow: 0 0 80px rgba(0,0,238,.08);
-            transform: scale(.88); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
-        }
-        .sov.open .sbox { transform: scale(1); }
-        .sico {
-            width: 72px; height: 72px; background: rgba(0,0,238,.12);
-            border: 2px solid var(--accent); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px; margin: 0 auto 24px; box-shadow: 0 0 30px rgba(0,0,238,.25);
-        }
-        .sbox h2 { font-size: 26px; font-weight: 900; margin-bottom: 14px; letter-spacing: -.5px; }
-        .sbody { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 8px; }
-        .sbody strong { color: var(--accent); font-weight: 600; }
-        .crow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
-        .cch {
-            display: flex; align-items: center; gap: 6px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 100px; padding: 8px 18px; font-size: 13px; font-weight: 500;
-            color: var(--muted); text-decoration: none; transition: all .2s;
-        }
-        .cch:hover { border-color: var(--accent); color: var(--accent); }
+        .sbox { background: #090909; border: 1px solid rgba(255,255,255,0.12); padding: 52px 44px; width: 100%; max-width: 500px; text-align: center; position: relative; transform: scale(.92) translateY(16px); transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+        .sbox::before { content: ''; position: absolute; top: -2px; left: -2px; width: 18px; height: 18px; border-top: 1px solid rgba(255,255,255,0.5); border-left: 1px solid rgba(255,255,255,0.5); }
+        .sbox::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-bottom: 1px solid rgba(255,255,255,0.5); border-right: 1px solid rgba(255,255,255,0.5); }
+        .sov.open .sbox { transform: scale(1) translateY(0); }
+        .sico { width: 64px; height: 64px; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 28px; }
+        .s-tag { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 16px; display: block; }
+        .sbox h2 { font-size: 30px; font-weight: 900; margin-bottom: 16px; letter-spacing: -0.03em; }
+        .sbody { font-family: var(--mono); font-size: 12px; color: var(--dim); line-height: 1.85; letter-spacing: 0.04em; }
+        .sbody strong { color: rgba(255,255,255,0.7); }
+        .s-divider { height: 1px; background: var(--border); margin: 28px 0; }
+        .s-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .s-link { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--dim); text-decoration: none; border: 1px solid var(--border); padding: 9px 20px; transition: all .2s; letter-spacing: 0.06em; }
+        .s-link:hover { border-color: rgba(255,255,255,0.35); color: var(--muted); }
 
-        /* ─── SELECT ARROW ─── */
-        select.fc {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff44' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 14px center;
-            padding-right: 36px; cursor: pointer;
-        }
+        /* ── SELECT ARROW ── */
+        select.fc { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff33' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
         select.fc option { background: #111; color: #fff; }
 
-        /* ─── RESPONSIVE ─── */
-        @media (max-width: 640px) {
+        /* ── RESPONSIVE ── */
+        @media (max-width: 720px) {
             nav { padding: 0 20px; }
-            .wrap { padding: 36px 16px 60px; }
-            .hdr h1 { font-size: 30px; }
+            .nav-links { display: none; }
+            .wrap { padding: 48px 16px 80px; }
             .r2, .dg { grid-template-columns: 1fr; }
             .dgrid { grid-template-columns: repeat(2,1fr); }
             .mgrid { grid-template-columns: 1fr; }
             .sgrid { grid-template-columns: repeat(3,1fr); }
-            .pgrid { grid-template-columns: 1fr; }
-            .sbox  { padding: 32px 24px; }
+            .pgrid { grid-template-columns: 1fr; align-items: stretch; }
+            .pcard.featured { margin: 0; padding: 28px 22px; }
+            .pcard + .pcard { border-left: 1px solid var(--border); border-top: none; }
+            .step-label { display: none; }
+            .step-conn { width: 28px; margin: 0 10px; }
+            .sbox { padding: 36px 24px; }
         }
     </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-    <a href="/" class="nav-logo"><span class="nav-dot"></span>CertifyBridge</a>
-    <span class="nav-tag">Internship Application</span>
+    <a href="/" class="nav-logo">
+        <img src="/logo.png" alt="CertifyBridge" style="height:28px;display:block;">
+    </a>
+    <div class="nav-links">
+        <a href="/#features">FEATURES</a>
+        <a href="/#pricing">PRICING</a>
+        <a href="/#how">How It Works</a>
+        <a href="/#contact">Contact Us</a>
+    </div>
+    <a href="/apply" class="nav-cta">Get Started</a>
 </nav>
 
 <main><div class="wrap">
 
-    <!-- HEADER -->
-    <div class="hdr">
-        <div class="badge">✦ Apply Now</div>
-        <h1>Start Your <span class="ac">Internship</span><br>Journey With Us</h1>
-        <p>Fill in your details and we'll connect you with the perfect internship opportunity — fast.</p>
+    <div class="hero">
+        <span class="hero-tag">// INTERNSHIP APPLICATION</span>
+        <h1>Get Your Certificate.<br>Starting Now.</h1>
+        <p class="hero-sub">Fill in your details &mdash; we handle the rest. Fast.</p>
     </div>
 
-    <!-- PROGRESS -->
     <div class="prog">
-        <div class="steps">
-            <div class="step active" id="si1"><div class="sc" id="sc1">1</div><div class="sl">Personal Info</div></div>
-            <div class="conn" id="cn1"></div>
-            <div class="step" id="si2"><div class="sc" id="sc2">2</div><div class="sl">Preferences</div></div>
-            <div class="conn" id="cn2"></div>
-            <div class="step" id="si3"><div class="sc" id="sc3">3</div><div class="sl">Choose Plan</div></div>
+        <div class="step-item active" id="si1">
+            <span class="step-num">01</span>
+            <span class="step-label">Personal Info</span>
+        </div>
+        <div class="step-conn" id="cn1"></div>
+        <div class="step-item" id="si2">
+            <span class="step-num">02</span>
+            <span class="step-label">Preferences</span>
+        </div>
+        <div class="step-conn" id="cn2"></div>
+        <div class="step-item" id="si3">
+            <span class="step-num">03</span>
+            <span class="step-label">Choose Plan</span>
         </div>
     </div>
 
-    <!-- ═══ STEP 1 ═══ -->
+    <!-- STEP 1 -->
     <div class="fs active" id="step-1">
-        <div class="sec-t">Personal Details</div>
-        <div class="sec-s">Let's start with the basics — tell us a little about yourself.</div>
-
+        <div class="sec-hdr">
+            <span class="sec-tag">// 01</span>
+            <h2>Personal Details</h2>
+            <p>Let's start with the basics.</p>
+        </div>
         <div class="r2">
             <div class="fg">
                 <label>First Name <span class="req">*</span></label>
@@ -427,41 +336,38 @@
                 <div class="em" id="e-lastName">Please enter your last name.</div>
             </div>
         </div>
-
         <div class="fg">
             <label>Email Address <span class="req">*</span></label>
             <input type="email" class="fc" id="email" placeholder="you@example.com" autocomplete="email">
             <div class="em" id="e-email">Please enter a valid email address.</div>
         </div>
-
         <div class="fg">
             <label>Phone Number <span class="req">*</span></label>
             <input type="tel" class="fc" id="phone" placeholder="+91 98765 43210" autocomplete="tel">
             <div class="em" id="e-phone">Please enter a valid 10-digit phone number.</div>
         </div>
-
         <div class="fg">
             <label>College / University <span class="req">*</span></label>
             <input type="text" class="fc" id="college" placeholder="e.g. Rajasthan Technical University" autocomplete="organization">
             <div class="em" id="e-college">Please enter your college name.</div>
-            <div class="priv">
-                <span class="pi">🔒</span>
-                <p>Hey! Just so you know — <strong>your college details are 100% private and secure.</strong> We store them safely and will <strong>never</strong> share them with your college, any organization, or any third party. This info is only used to understand your background better. You have our word! 🤝</p>
+            <div class="priv-note">
+                <span class="pi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <p>Your college details are <strong>100% private and secure</strong>. We store them safely and will <strong>never</strong> share them with your college, any organization, or any third party.</p>
             </div>
         </div>
-
         <div class="nav-b">
             <div></div>
-            <button class="btn btn-p" onclick="goTo(2)">Continue &rarr;</button>
+            <button class="btn-bracket" onclick="goTo(2)">Continue &rarr;</button>
         </div>
     </div>
 
-    <!-- ═══ STEP 2 ═══ -->
+    <!-- STEP 2 -->
     <div class="fs" id="step-2">
-        <div class="sec-t">Internship Preferences</div>
-        <div class="sec-s">Tell us what kind of internship you're looking for.</div>
-
-        <!-- Dates -->
+        <div class="sec-hdr">
+            <span class="sec-tag">// 02</span>
+            <h2>Internship Preferences</h2>
+            <p>Tell us what you're looking for.</p>
+        </div>
         <div class="fg">
             <label>Internship Duration <span class="req">*</span></label>
             <div class="dg">
@@ -474,64 +380,69 @@
                     <div class="em" id="e-endDate">Please select an end date.</div>
                 </div>
             </div>
-            <div class="dur hi" id="durPill"><span>&#9201;</span> <span id="durTxt"></span></div>
+            <div class="dur-pill" id="durPill"><span id="durTxt"></span></div>
         </div>
-
-        <!-- Domain -->
         <div class="fg">
             <label>Internship Domain <span class="req">*</span></label>
             <div class="dgrid">
-                <div class="dc" onclick="pickDomain('Web Development',this)"><span class="di">🌐</span>Web Development</div>
-                <div class="dc" onclick="pickDomain('App Development',this)"><span class="di">📱</span>App Development</div>
-                <div class="dc" onclick="pickDomain('Software Development',this)"><span class="di">💻</span>Software Development</div>
-                <div class="dc" onclick="pickDomain('Graphic Designer',this)"><span class="di">🎨</span>Graphic Designer</div>
-                <div class="dc" onclick="pickDomain('AI Automation Engineer',this)"><span class="di">🤖</span>AI Automation Engineer</div>
-                <div class="dc" onclick="pickDomain('AI Programmer',this)"><span class="di">🧠</span>AI Programmer</div>
-                <div class="dc" onclick="pickDomain('Data Science & AI',this)"><span class="di">📊</span>Data Science &amp; AI</div>
-                <div class="dc" onclick="pickDomain('Digital Marketing',this)"><span class="di">📣</span>Digital Marketing</div>
-                <div class="dc" onclick="pickDomain('UI/UX Design',this)"><span class="di">✏️</span>UI/UX Design</div>
-                <div class="dc" onclick="pickDomain('DevOps Engineer',this)"><span class="di">⚙️</span>DevOps Engineer</div>
-                <div class="dc" onclick="pickDomain('Program Management',this)"><span class="di">📋</span>Program Management</div>
-                <div class="dc" onclick="pickDomain('Project Management',this)"><span class="di">🗂️</span>Project Management</div>
-                <div class="dc" onclick="pickDomain('Cyber Security',this)"><span class="di">🔐</span>Cyber Security</div>
-                <div class="dc" onclick="pickDomain('Cloud Computing',this)"><span class="di">☁️</span>Cloud Computing</div>
-                <div class="dc cust" id="custCard" onclick="openCustom()"><span class="di">✦</span>&nbsp;Custom</div>
+                <div class="dc" onclick="pickDomain('Web Development',this)">Web Development</div>
+                <div class="dc" onclick="pickDomain('App Development',this)">App Development</div>
+                <div class="dc" onclick="pickDomain('Software Development',this)">Software Dev</div>
+                <div class="dc" onclick="pickDomain('Graphic Design',this)">Graphic Design</div>
+                <div class="dc" onclick="pickDomain('AI Automation Engineer',this)">AI Automation</div>
+                <div class="dc" onclick="pickDomain('AI Programmer',this)">AI Programming</div>
+                <div class="dc" onclick="pickDomain('Data Science &amp; AI',this)">Data Science &amp; AI</div>
+                <div class="dc" onclick="pickDomain('Digital Marketing',this)">Digital Marketing</div>
+                <div class="dc" onclick="pickDomain('UI/UX Design',this)">UI / UX Design</div>
+                <div class="dc" onclick="pickDomain('DevOps Engineer',this)">DevOps</div>
+                <div class="dc" onclick="pickDomain('Program Management',this)">Program Mgmt</div>
+                <div class="dc" onclick="pickDomain('Project Management',this)">Project Mgmt</div>
+                <div class="dc" onclick="pickDomain('Cyber Security',this)">Cyber Security</div>
+                <div class="dc" onclick="pickDomain('Cloud Computing',this)">Cloud Computing</div>
+                <div class="dc cust" id="custCard" onclick="openCustom()">+ Custom</div>
             </div>
             <div class="em" id="e-domain">Please select a domain.</div>
         </div>
-
-        <!-- Mode -->
         <div class="fg">
             <label>Preferred Mode <span class="req">*</span></label>
             <div class="mgrid">
                 <div class="mc" onclick="pickMode('Online',this)">
-                    <div class="mi">💻</div><div class="mn">Online</div><div class="md">Work from anywhere</div>
+                    <div class="mc-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    </div>
+                    <div class="mc-name">Online</div>
+                    <div class="mc-desc">Work from anywhere</div>
                 </div>
                 <div class="mc" onclick="pickMode('Offline',this)">
-                    <div class="mi">🏢</div><div class="mn">Offline</div><div class="md">In-office presence</div>
+                    <div class="mc-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="mc-name">Offline</div>
+                    <div class="mc-desc">In-office presence</div>
                 </div>
                 <div class="mc" onclick="pickMode('Hybrid',this)">
-                    <div class="mi">🔄</div><div class="mn">Hybrid</div><div class="md">Mix of both</div>
+                    <div class="mc-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/></svg>
+                    </div>
+                    <div class="mc-name">Hybrid</div>
+                    <div class="mc-desc">Mix of both</div>
                 </div>
             </div>
             <div class="em" id="e-mode">Please select a preferred mode.</div>
-
-            <div class="loc" id="locBox">
-                <span class="ll">Preferred City <span class="req">*</span></span>
-                <div class="cw">
-                    <div class="cc" onclick="pickCity('Jaipur',this)">Jaipur</div>
-                    <div class="cc" onclick="pickCity('Delhi',this)">Delhi</div>
-                    <div class="cc" onclick="pickCity('Mumbai',this)">Mumbai</div>
-                    <div class="cc" onclick="pickCity('Hyderabad',this)">Hyderabad</div>
-                    <div class="cc" onclick="pickCity('Ahmedabad',this)">Ahmedabad</div>
-                    <div class="cc" onclick="pickCity('Pune',this)">Pune</div>
-                    <div class="cc" onclick="pickCity('Bangalore',this)">Bangalore</div>
+            <div class="loc-box" id="locBox">
+                <span class="loc-label">Preferred City <span class="req">*</span></span>
+                <div class="city-wrap">
+                    <div class="city-pill" onclick="pickCity('Jaipur',this)">Jaipur</div>
+                    <div class="city-pill" onclick="pickCity('Delhi',this)">Delhi</div>
+                    <div class="city-pill" onclick="pickCity('Mumbai',this)">Mumbai</div>
+                    <div class="city-pill" onclick="pickCity('Hyderabad',this)">Hyderabad</div>
+                    <div class="city-pill" onclick="pickCity('Ahmedabad',this)">Ahmedabad</div>
+                    <div class="city-pill" onclick="pickCity('Pune',this)">Pune</div>
+                    <div class="city-pill" onclick="pickCity('Bangalore',this)">Bangalore</div>
                 </div>
-                <div class="em" id="e-city" style="margin-top:8px;">Please select a preferred city.</div>
+                <div class="em" id="e-city" style="margin-top:10px;">Please select a preferred city.</div>
             </div>
         </div>
-
-        <!-- Stipend -->
         <div class="fg">
             <label>Expected Stipend Range <span class="req">*</span></label>
             <div class="sgrid">
@@ -543,97 +454,91 @@
             </div>
             <div class="em" id="e-stip">Please select a stipend range.</div>
         </div>
-
-        <!-- Note -->
         <div class="fg">
-            <label>Additional Note <span class="opt">(Optional)</span></label>
-            <textarea class="fc" id="note" placeholder="Share any additional context — college requirements, specific preferences, or anything you'd like us to know. The more you share, the better we can match you! 💬"></textarea>
+            <label>Additional Note <span class="opt">(optional)</span></label>
+            <textarea class="fc" id="note" placeholder="Share any additional context — college requirements, specific preferences, or anything you'd like us to know."></textarea>
         </div>
-
         <div class="nav-b">
-            <button class="btn btn-g" onclick="goTo(1)">&larr; Back</button>
-            <button class="btn btn-p" onclick="goTo(3)">Continue &rarr;</button>
+            <button class="btn-ghost" onclick="goTo(1)">&larr; Back</button>
+            <button class="btn-bracket" onclick="goTo(3)">Continue &rarr;</button>
         </div>
     </div>
 
-    <!-- ═══ STEP 3 ═══ -->
+    <!-- STEP 3 -->
     <div class="fs" id="step-3">
-
-        <div class="ph">
-            <h2>Choose Your <span style="color:var(--accent)">Plan</span></h2>
-            <p>Pick the plan that fits your goals. All plans include verified internship matching.</p>
+        <div class="plan-hdr">
+            <span class="sec-tag">// 03</span>
+            <h2>Simple Plans Built<br>to Scale With You.</h2>
+            <p>All plans include internship documentation &mdash; choose your level.</p>
         </div>
-
         <div class="pgrid">
-            <!-- NEW -->
-            <div class="pcard" id="plan-new" onclick="pickPlan('new',999)">
-                <div class="pn">New</div>
-                <div class="pp"><sup>&#8377;</sup>999</div>
-                <div class="pdiv"></div>
-                <ul class="pf">
-                    <li><span class="ck">&#10003;</span> 1 Domain Match</li>
-                    <li><span class="ck">&#10003;</span> Basic Resources Pack</li>
-                    <li><span class="ck">&#10003;</span> Email Support</li>
-                    <li><span class="ck">&#10003;</span> Offer Letter Template</li>
+            <div class="pcard" id="plan-noob" onclick="pickPlan('noob')">
+                <div class="plan-tier">// NOOB</div>
+                <div class="plan-price"><sup>&#8377;</sup>499</div>
+                <div class="plan-desc">Perfect for basic submission</div>
+                <button class="plan-btn" tabindex="-1">Select Plan</button>
+                <span class="plan-feats-label">Features:</span>
+                <ul class="plan-feats">
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Offer Letter (PDF)</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Certificate of Completion</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>PDF format (non-verifiable)</li>
                 </ul>
             </div>
-            <!-- PRO -->
-            <div class="pcard" id="plan-pro" onclick="pickPlan('pro',1999)">
-                <div class="pop">Most Popular</div>
-                <div class="pn">Pro</div>
-                <div class="pp"><sup>&#8377;</sup>1,999</div>
-                <div class="pdiv"></div>
-                <ul class="pf">
-                    <li><span class="ck">&#10003;</span> 3 Domain Matches</li>
-                    <li><span class="ck">&#10003;</span> Full Resource Bundle</li>
-                    <li><span class="ck">&#10003;</span> Priority Email Support</li>
-                    <li><span class="ck">&#10003;</span> LinkedIn Profile Review</li>
-                    <li><span class="ck">&#10003;</span> Resume &amp; Cover Letter</li>
+            <div class="pcard featured" id="plan-pro" onclick="pickPlan('pro')">
+                <div class="plan-tier">// PRO</div>
+                <div class="plan-price"><sup>&#8377;</sup>999</div>
+                <div class="plan-desc">Best for students needing verified proof</div>
+                <button class="plan-btn" tabindex="-1">Select Plan</button>
+                <span class="plan-feats-label">Features:</span>
+                <ul class="plan-feats">
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Official Offer Letter</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Certificate of Completion</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Unique Certificate ID</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Verification portal link</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Professional email delivery</li>
                 </ul>
             </div>
-            <!-- HACKER -->
-            <div class="pcard" id="plan-hacker" onclick="pickPlan('hacker',4999)">
-                <div class="pn">Hacker</div>
-                <div class="pp"><sup>&#8377;</sup>4,999</div>
-                <div class="pdiv"></div>
-                <ul class="pf">
-                    <li><span class="ck">&#10003;</span> Unlimited Matches</li>
-                    <li><span class="ck">&#10003;</span> Premium Resource Bundle</li>
-                    <li><span class="ck">&#10003;</span> WhatsApp Priority Support</li>
-                    <li><span class="ck">&#10003;</span> 1-on-1 Career Mentoring</li>
-                    <li><span class="ck">&#10003;</span> Resume + Portfolio Review</li>
-                    <li><span class="ck">&#10003;</span> Interview Prep Sessions</li>
+            <div class="pcard" id="plan-hacker" onclick="pickPlan('hacker')">
+                <div class="plan-tier">// HACKER</div>
+                <div class="plan-price"><sup>&#8377;</sup>1599</div>
+                <div class="plan-desc">The complete internship documentation kit</div>
+                <button class="plan-btn" tabindex="-1">Select Plan</button>
+                <span class="plan-feats-label">Features:</span>
+                <ul class="plan-feats">
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Everything in Pro</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Letter of Recommendation (LOR)</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Full Project Documentation Report</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>LinkedIn announcement post copy</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Complete ZIP bundle</li>
+                    <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Priority processing + 24/7 support</li>
                 </ul>
             </div>
         </div>
 
-        <!-- Order Summary -->
         <div class="osb" id="osb">
-            <h4>Order Summary</h4>
-            <div class="or"><span class="ol">Applicant</span><span class="ov" id="oName">—</span></div>
-            <div class="or"><span class="ol">Domain</span><span class="ov" id="oDomain">—</span></div>
-            <div class="or"><span class="ol">Mode</span><span class="ov" id="oMode">—</span></div>
-            <div class="or"><span class="ol">Duration</span><span class="ov" id="oDur">—</span></div>
-            <div class="or"><span class="ol">Plan</span><span class="ov" id="oPlan">—</span></div>
-            <div class="or"><span class="ol">Total</span><span class="ov g" id="oTotal">—</span></div>
+            <div class="osb-title">// Order Summary</div>
+            <div class="or"><span class="ol">Applicant</span><span class="ov" id="oName">&mdash;</span></div>
+            <div class="or"><span class="ol">Domain</span><span class="ov" id="oDomain">&mdash;</span></div>
+            <div class="or"><span class="ol">Mode</span><span class="ov" id="oMode">&mdash;</span></div>
+            <div class="or"><span class="ol">Duration</span><span class="ov" id="oDur">&mdash;</span></div>
+            <div class="or"><span class="ol">Plan</span><span class="ov" id="oPlan">&mdash;</span></div>
+            <div class="or"><span class="ol">Total</span><span class="ov total" id="oTotal">&mdash;</span></div>
         </div>
 
         <div class="perr" id="perr">Please select a plan before proceeding.</div>
-
-        <!-- DPDPA 2023 consent -->
-        <label class="consent-label" id="consentLabel">
+        <label class="consent-wrap">
             <input type="checkbox" id="consentChk" onchange="togglePayBtn()">
-            <span>I consent to CertifyBridge collecting and processing my personal data (name, email, phone) for the purpose of internship matching, as described in our <a href="mailto:contact@certifybridge.com" style="color:var(--accent);">Privacy Policy</a>.</span>
+            <span>I consent to CertifyBridge collecting and processing my personal data (name, email, phone) for the purpose of internship documentation, as described in our <a href="mailto:contact@certifybridge.com">Privacy Policy</a>.</span>
         </label>
-        <div class="em" id="e-consent" style="margin-bottom:8px;">Please accept the consent to proceed.</div>
+        <div class="em" id="e-consent" style="margin-bottom:12px;">Please accept the consent to proceed.</div>
 
-        <button class="paybtn" id="payBtn" onclick="handlePay()" disabled>
-            &#128274;&nbsp; Pay Securely with Razorpay
+        <button class="pay-btn" id="payBtn" onclick="handlePay()" disabled>
+            <svg id="payIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span id="payLabel">Pay Securely with Razorpay</span>
         </button>
         <p class="pay-note">Secured by Razorpay &middot; 256-bit SSL &middot; Instant confirmation</p>
-
         <div class="nav-b">
-            <button class="btn btn-g" onclick="goTo(2)">&larr; Back</button>
+            <button class="btn-ghost" onclick="goTo(2)">&larr; Back</button>
             <div></div>
         </div>
     </div>
@@ -643,16 +548,17 @@
 <!-- CUSTOM DOMAIN DIALOG -->
 <div class="ov-bg" id="custOv">
     <div class="dlg">
-        <h3>Custom Domain</h3>
-        <p class="ds">Tell us about the domain you'd like to intern in — be as specific as you like!</p>
+        <span class="dlg-tag">// CUSTOM DOMAIN</span>
+        <h3>Your Domain</h3>
+        <p class="ds">Tell us about the domain you'd like to intern in &mdash; be as specific as you like.</p>
         <div class="fg">
-            <label>Your Domain <span class="req">*</span></label>
-            <input type="text" class="fc" id="custIn" placeholder="e.g. Blockchain, AR/VR, Quantum Computing…">
+            <label>Domain Name <span class="req">*</span></label>
+            <input type="text" class="fc" id="custIn" placeholder="e.g. Blockchain, AR/VR, Quantum Computing&#8230;">
             <div class="em" id="e-custIn">Please describe your domain.</div>
         </div>
         <div class="da">
-            <button class="btn btn-g" onclick="closeCustom()">Cancel</button>
-            <button class="btn btn-p" onclick="confirmCustom()">Confirm</button>
+            <button class="btn-ghost" onclick="closeCustom()">Cancel</button>
+            <button class="btn-bracket" onclick="confirmCustom()">Confirm</button>
         </div>
     </div>
 </div>
@@ -660,84 +566,71 @@
 <!-- SUCCESS MODAL -->
 <div class="sov" id="sov">
     <div class="sbox">
-        <div class="sico">&#10003;</div>
-        <h2>We've Got You! &#127881;</h2>
+        <div class="sico">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>
+        </div>
+        <span class="s-tag">// PAYMENT CONFIRMED</span>
+        <h2>You're All Set.</h2>
         <p class="sbody">
-            Thank you, <strong id="sName">there</strong>!
-            Your internship requirement has been successfully registered.<br><br>
-            We'll review your details and share all resources as per your
+            Thank you, <strong id="sName">there</strong>! Your application has been confirmed.<br><br>
+            We'll review your details and deliver all documents as per your
             <strong id="sPlan">plan</strong> within <strong>24 hours</strong>.
-            A confirmation has been sent to <strong id="sEmail">your email</strong>.
+            Confirmation has been sent to <strong id="sEmail">your email</strong>.
         </p>
-        <p style="font-size:13px;color:var(--dim);margin-top:16px;">Need anything in the meantime? We're here:</p>
-        <div class="crow">
-            <a id="emailLink" href="#" class="cch">&#9993;&#65039; Email Us</a>
-            <a id="waLink" href="#" target="_blank" class="cch">&#128172; WhatsApp</a>
+        <div class="s-divider"></div>
+        <div class="s-actions">
+            <a id="emailLink" href="#" class="s-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+                Email Us
+            </a>
+            <a id="waLink" href="#" target="_blank" rel="noopener noreferrer" class="s-link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                WhatsApp
+            </a>
         </div>
     </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// CONFIG — only public values here
-// Amount and emails are handled server-side
-// ═══════════════════════════════════════════
-var CFG = {
-    RAZORPAY_KEY: '',  // loaded from /api/config at startup — no hardcoded placeholder
-    COMPANY:      'CertifyBridge',
-    EMAIL:        'contact@certifybridge.com',
-    WA:           '919999999999',
-};
-
-// Load public Razorpay Key ID from server so it's always correct across environments
+var CFG = { RAZORPAY_KEY:'', COMPANY:'CertifyBridge', EMAIL:'contact@certifybridge.com', WA:'', plans:[] };
+var configLoaded = false;
 (async function loadConfig(){
     try {
-        var r = await fetch('/api/config');
-        if(r.ok){ var d = await r.json(); CFG.RAZORPAY_KEY = d.razorpayKeyId || ''; }
-    } catch(e){ console.warn('Could not load /api/config:', e); }
+        var r=await fetch('/api/config');
+        if(r.ok){
+            var d=await r.json();
+            CFG.RAZORPAY_KEY = d.razorpayKeyId  || '';
+            CFG.COMPANY      = d.companyName    || CFG.COMPANY;
+            CFG.EMAIL        = d.supportEmail   || CFG.EMAIL;
+            CFG.WA           = d.whatsappNumber || '';
+            CFG.plans        = d.plans          || [];
+        }
+    } catch(e){ console.warn('Could not load /api/config:',e); }
+    configLoaded = true;
+    togglePayBtn();
 })();
 
-var PLAN_NAMES = { new:'New Plan', pro:'Pro Plan', hacker:'Hacker Plan' };
-
-// ─── state ───
+function planName(p){ var pl=(CFG.plans||[]).find(function(x){return x.key===p;}); return pl?pl.name:p; }
 var cur=1, dom='', mode='', city='', stip='', plan='', serverAmt=0;
 
-// ─── helpers ───
 function gv(id){ return document.getElementById(id).value.trim(); }
+function setErr(id,msg){ var e=document.getElementById('e-'+id); if(e){if(msg)e.textContent=msg; e.classList.add('show');} var f=document.getElementById(id); if(f)f.classList.add('err'); }
+function clrErr(id){ var e=document.getElementById('e-'+id); if(e)e.classList.remove('show'); var f=document.getElementById(id); if(f)f.classList.remove('err'); }
 
-function setErr(id,msg){
-    var e=document.getElementById('e-'+id);
-    if(e){ if(msg)e.textContent=msg; e.classList.add('show'); }
-    var f=document.getElementById(id);
-    if(f)f.classList.add('err');
-}
-function clrErr(id){
-    var e=document.getElementById('e-'+id);
-    if(e)e.classList.remove('show');
-    var f=document.getElementById(id);
-    if(f)f.classList.remove('err');
-}
-
-// ─── navigation ───
 function goTo(n){
-    if(n>cur && !validate(cur)) return;
+    if(n>cur&&!validate(cur)) return;
     document.getElementById('step-'+cur).classList.remove('active');
     document.getElementById('step-'+n).classList.add('active');
     for(var i=1;i<=3;i++){
-        var si=document.getElementById('si'+i), sc=document.getElementById('sc'+i);
+        var si=document.getElementById('si'+i);
         si.classList.remove('active','done');
-        if(i<n){ si.classList.add('done'); sc.textContent='\u2713'; }
-        else if(i===n){ si.classList.add('active'); sc.textContent=i; }
-        else{ sc.textContent=i; }
+        if(i<n) si.classList.add('done');
+        else if(i===n) si.classList.add('active');
     }
-    for(var j=1;j<=2;j++)
-        document.getElementById('cn'+j).classList.toggle('done',j<n);
-    cur=n;
-    window.scrollTo({top:0,behavior:'smooth'});
-    if(n===3) refreshSum();
+    for(var j=1;j<=2;j++) document.getElementById('cn'+j).classList.toggle('done',j<n);
+    cur=n; window.scrollTo({top:0,behavior:'smooth'}); if(n===3) refreshSum();
 }
 
-// ─── validation ───
 function validate(step){
     var ok=true;
     if(step===1){
@@ -751,7 +644,7 @@ function validate(step){
         var sd=gv('startDate'), ed=gv('endDate');
         sd? clrErr('startDate'):(setErr('startDate'),ok=false);
         ed? clrErr('endDate')  :(setErr('endDate'),  ok=false);
-        if(sd && ed){
+        if(sd&&ed){
             var mo=(new Date(ed)-new Date(sd))/2592e6;
             if(new Date(ed)<=new Date(sd)){ setErr('endDate','End date must be after start date.'); ok=false; }
             else if(mo<1){ setErr('endDate','Minimum duration is 1 month.'); ok=false; }
@@ -766,12 +659,11 @@ function validate(step){
     return ok;
 }
 
-// ─── duration calculator ───
 function calcDur(){
     var sd=gv('startDate'), ed=gv('endDate'), pill=document.getElementById('durPill'), txt=document.getElementById('durTxt');
-    if(!sd||!ed){ pill.className='dur hi'; return; }
+    if(!sd||!ed){ pill.className='dur-pill'; return; }
     var days=Math.round((new Date(ed)-new Date(sd))/864e5), mo=days/30;
-    pill.className='dur';
+    pill.className='dur-pill show';
     if(new Date(ed)<=new Date(sd)){ pill.classList.add('bad'); txt.textContent='End date must be after start date'; return; }
     if(mo<1){ pill.classList.add('bad'); txt.textContent='Minimum duration is 1 month'; return; }
     if(mo>12){ pill.classList.add('bad'); txt.textContent='Maximum duration is 1 year'; return; }
@@ -782,15 +674,8 @@ function calcDur(){
     txt.textContent='Duration: '+s;
 }
 
-// ─── domain ───
-function pickDomain(name,el){
-    document.querySelectorAll('.dc').forEach(function(c){c.classList.remove('sel');});
-    el.classList.add('sel'); dom=name; clrErr('domain');
-}
-function openCustom(){
-    document.getElementById('custOv').classList.add('open');
-    setTimeout(function(){document.getElementById('custIn').focus();},200);
-}
+function pickDomain(name,el){ document.querySelectorAll('.dc').forEach(function(c){c.classList.remove('sel');}); el.classList.add('sel'); dom=name; clrErr('domain'); }
+function openCustom(){ document.getElementById('custOv').classList.add('open'); setTimeout(function(){document.getElementById('custIn').focus();},200); }
 function closeCustom(){ document.getElementById('custOv').classList.remove('open'); }
 function confirmCustom(){
     var val=document.getElementById('custIn').value.trim();
@@ -798,215 +683,99 @@ function confirmCustom(){
     document.getElementById('e-custIn').classList.remove('show');
     document.querySelectorAll('.dc').forEach(function(c){c.classList.remove('sel');});
     var card=document.getElementById('custCard');
-    // Safe DOM update — no innerHTML with user content
     while(card.firstChild) card.removeChild(card.firstChild);
-    var ico=document.createElement('span'); ico.className='di'; ico.textContent='✦';
-    card.appendChild(ico);
-    card.appendChild(document.createTextNode('\u00a0'+val));
+    card.appendChild(document.createTextNode(val));
     card.classList.add('sel');
     dom=val; clrErr('domain'); closeCustom();
 }
-
-// ─── mode ───
 function pickMode(m,el){
     document.querySelectorAll('.mc').forEach(function(c){c.classList.remove('sel');});
     el.classList.add('sel'); mode=m; clrErr('mode');
     var lb=document.getElementById('locBox');
-    if(m==='Offline'||m==='Hybrid'){ lb.classList.add('show'); }
-    else{
-        lb.classList.remove('show'); city='';
-        document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});
-    }
+    if(m==='Offline'||m==='Hybrid') lb.classList.add('show');
+    else{ lb.classList.remove('show'); city=''; document.querySelectorAll('.city-pill').forEach(function(c){c.classList.remove('sel');}); }
 }
+function pickCity(c,el){ document.querySelectorAll('.city-pill').forEach(function(x){x.classList.remove('sel');}); el.classList.add('sel'); city=c; clrErr('city'); }
+function pickStip(r,el){ document.querySelectorAll('.sch').forEach(function(c){c.classList.remove('sel');}); el.classList.add('sel'); stip=r; clrErr('stip'); }
 
-// ─── city ───
-function pickCity(c,el){
-    document.querySelectorAll('.cc').forEach(function(x){x.classList.remove('sel');});
-    el.classList.add('sel'); city=c; clrErr('city');
-}
-
-// ─── stipend ───
-function pickStip(r,el){
-    document.querySelectorAll('.sch').forEach(function(c){c.classList.remove('sel');});
-    el.classList.add('sel'); stip=r; clrErr('stip');
-}
-
-// ─── plan ───
-// Note: 'a' (display amount) is kept for UI only — real amount is locked server-side
-function pickPlan(p,a){
+function pickPlan(p){
+    // Look up canonical amount from config; fall back to data-amount attribute for resilience
+    var pl=(CFG.plans||[]).find(function(x){return x.key===p;});
+    var card=document.getElementById('plan-'+p);
+    var a=pl?pl.amount:parseInt(card&&card.getAttribute('data-amount')||'0',10);
     document.querySelectorAll('.pcard').forEach(function(c){c.classList.remove('sel');});
-    document.getElementById('plan-'+p).classList.add('sel');
-    plan=p; serverAmt=a;  // display value only, not trusted for payment
+    card.classList.add('sel');
+    plan=p; serverAmt=a;
     document.getElementById('perr').classList.remove('show');
     document.getElementById('osb').style.display='block';
-    refreshSum();
-    togglePayBtn();
+    refreshSum(); togglePayBtn();
 }
 
-// ─── consent + pay button ───
 function togglePayBtn(){
-    var checked = document.getElementById('consentChk').checked;
-    document.getElementById('payBtn').disabled = !checked;
+    var checked=document.getElementById('consentChk').checked;
+    document.getElementById('payBtn').disabled=!(plan&&checked&&configLoaded);
     if(checked) document.getElementById('e-consent').classList.remove('show');
 }
 
 function refreshSum(){
-    document.getElementById('oName').textContent   = (gv('firstName')+' '+gv('lastName')).trim()||'—';
-    document.getElementById('oDomain').textContent = dom||'—';
-    document.getElementById('oMode').textContent   = mode+(city?' \u00b7 '+city:'')||'—';
-    document.getElementById('oDur').textContent    = document.getElementById('durTxt').textContent.replace('Duration: ','')||'—';
-    document.getElementById('oPlan').textContent   = plan?PLAN_NAMES[plan]:'—';
-    document.getElementById('oTotal').textContent  = plan?'\u20b9'+serverAmt.toLocaleString('en-IN'):'—';
-}
-
-// ─── payment (secure 2-step flow) ───────────────────────────────────────────
-//
-// Step 1: POST /api/create-order  → amount locked server-side → get order_id
-// Step 2: Razorpay modal opens with order_id (not a client-supplied amount)
-// Step 3: POST /api/verify-payment → HMAC check + MongoDB save + Resend email
-//
-async function handlePay(){
-    if(!plan){ document.getElementById('perr').classList.add('show'); return; }
-    if(!document.getElementById('consentChk').checked){
-        document.getElementById('e-consent').classList.add('show'); return;
-    }
-
-    var btn = document.getElementById('payBtn');
-    btn.disabled = true;
-    btn.textContent = 'Creating order\u2026';
-
-    // ── Step 1: Create order server-side ────────────────────────────────────
-    var orderRes;
-    try {
-        orderRes = await fetch('/api/create-order', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ plan: plan }),
-        });
-    } catch(netErr) {
-        alert('Network error. Please check your connection and try again.');
-        resetPayBtn(btn); return;
-    }
-
-    if(!orderRes.ok){
-        var errBody = {};
-        try { errBody = await orderRes.json(); } catch(_){}
-        alert('Could not create order: ' + (errBody.error || 'Unknown error') + '. Please try again.');
-        resetPayBtn(btn); return;
-    }
-
-    var orderData = await orderRes.json();
-    serverAmt = orderData.amount; // store for display in summary
-    refreshSum();
-
-    btn.textContent = 'Opening payment\u2026';
-
-    // ── Step 2: Open Razorpay with server-issued order_id ───────────────────
-    var opts = {
-        key:         CFG.RAZORPAY_KEY,      // public key only — secret never in browser
-        order_id:    orderData.orderId,     // from server — amount is locked inside this
-        amount:      orderData.amount * 100,// paise — from server, display only
-        currency:    'INR',
-        name:        CFG.COMPANY,
-        description: 'Internship Application \u2014 ' + PLAN_NAMES[plan],
-        prefill: {
-            name:    gv('firstName') + ' ' + gv('lastName'),
-            email:   gv('email'),
-            contact: gv('phone'),
-        },
-        theme: { color: '#0000ee' },
-        handler: function(rzpResp) {
-            // ── Step 3: Verify payment server-side ──────────────────────────
-            verifyPayment(rzpResp, btn);
-        },
-        modal: {
-            ondismiss: function() { resetPayBtn(btn); }
-        }
-    };
-
-    new Razorpay(opts).open();
-}
-
-// ─── verify payment server-side ─────────────────────────────────────────────
-async function verifyPayment(rzpResp, btn){
-    btn.disabled = true;
-    btn.textContent = 'Verifying payment\u2026';
-
-    var payload = {
-        razorpay_order_id:   rzpResp.razorpay_order_id,
-        razorpay_payment_id: rzpResp.razorpay_payment_id,
-        razorpay_signature:  rzpResp.razorpay_signature,
-        // Form data — sent once here, never sent client-side to email
-        firstName: gv('firstName'),
-        lastName:  gv('lastName'),
-        email:     gv('email'),
-        phone:     gv('phone'),
-        college:   gv('college'),
-        domain:    dom,
-        mode:      mode,
-        city:      city || '',
-        stipend:   stip,
-        startDate: gv('startDate'),
-        endDate:   gv('endDate'),
-        duration:  document.getElementById('durTxt').textContent.replace('Duration: ',''),
-        note:      gv('note') || '',
-        plan:      plan,
-        consent:   document.getElementById('consentChk').checked,
-    };
-
-    var verifyRes;
-    try {
-        verifyRes = await fetch('/api/verify-payment', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
-        });
-    } catch(netErr) {
-        // Payment was captured by Razorpay but we couldn't verify.
-        // Show user their payment ID so they can contact support.
-        alert(
-            'Payment received but verification failed due to a network error.\n\n' +
-            'Please contact us with your Payment ID: ' + rzpResp.razorpay_payment_id + '\n' +
-            'Email: ' + CFG.EMAIL
-        );
-        resetPayBtn(btn); return;
-    }
-
-    if(!verifyRes.ok){
-        var errBody = {};
-        try { errBody = await verifyRes.json(); } catch(_){}
-        alert(errBody.error || ('Verification failed. Please contact support with Payment ID: ' + rzpResp.razorpay_payment_id));
-        resetPayBtn(btn); return;
-    }
-
-    // ── Payment verified — show success modal ────────────────────────────────
-    showSuccess(rzpResp);
-}
-
-// ─── show success modal ──────────────────────────────────────────────────────
-function showSuccess(rzpResp){
-    document.getElementById('sName').textContent   = gv('firstName');
-    document.getElementById('sPlan').textContent   = PLAN_NAMES[plan];
-    document.getElementById('sEmail').textContent  = gv('email');
-    document.getElementById('emailLink').href       = 'mailto:' + CFG.EMAIL;
-    document.getElementById('waLink').href          = 'https://wa.me/' + CFG.WA;
-    document.getElementById('sov').classList.add('open');
+    document.getElementById('oName').textContent  =(gv('firstName')+' '+gv('lastName')).trim()||'\u2014';
+    document.getElementById('oDomain').textContent=dom||'\u2014';
+    document.getElementById('oMode').textContent  =mode+(city?' \u00b7 '+city:'')||'\u2014';
+    document.getElementById('oDur').textContent   =document.getElementById('durTxt').textContent.replace('Duration: ','')||'\u2014';
+    document.getElementById('oPlan').textContent  =plan?planName(plan):'\u2014';
+    document.getElementById('oTotal').textContent =plan?'\u20b9'+serverAmt.toLocaleString('en-IN'):'\u2014';
 }
 
 function resetPayBtn(btn){
-    btn.disabled    = false;
-    btn.textContent = '\uD83D\uDD12\u00A0 Pay Securely with Razorpay';
+    btn.disabled=false;
+    document.getElementById('payLabel').textContent='Pay Securely with Razorpay';
+    document.getElementById('payIcon').style.display='';
 }
 
-// ─── close dialog on overlay click ───
-document.getElementById('custOv').addEventListener('click',function(e){
-    if(e.target===this) closeCustom();
-});
+async function handlePay(){
+    if(!plan){ document.getElementById('perr').classList.add('show'); return; }
+    if(!document.getElementById('consentChk').checked){ document.getElementById('e-consent').classList.add('show'); return; }
+    var btn=document.getElementById('payBtn');
+    btn.disabled=true; document.getElementById('payIcon').style.display='none'; document.getElementById('payLabel').textContent='Creating order\u2026';
+    var orderRes;
+    try { orderRes=await fetch('/api/create-order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:plan})}); }
+    catch(e){ alert('Network error. Please check your connection and try again.'); resetPayBtn(btn); return; }
+    if(!orderRes.ok){ var eb={}; try{eb=await orderRes.json();}catch(_){} alert('Could not create order: '+(eb.error||'Unknown error')+'. Please try again.'); resetPayBtn(btn); return; }
+    var od=await orderRes.json(); serverAmt=od.amount; refreshSum();
+    document.getElementById('payLabel').textContent='Opening payment\u2026';
+    new Razorpay({
+        key:CFG.RAZORPAY_KEY, order_id:od.orderId, amount:od.amount*100, currency:'INR',
+        name:CFG.COMPANY, description:'Internship Application \u2014 '+planName(plan),
+        prefill:{name:gv('firstName')+' '+gv('lastName'),email:gv('email'),contact:gv('phone')},
+        theme:{color:'#ffffff'},
+        handler:function(r){ verifyPayment(r,btn); },
+        modal:{ondismiss:function(){ resetPayBtn(btn); }}
+    }).open();
+}
 
-// ─── min date = today ───
-var today=new Date().toISOString().split('T')[0];
-document.getElementById('startDate').min=today;
-document.getElementById('endDate').min=today;
+async function verifyPayment(rzp,btn){
+    btn.disabled=true; document.getElementById('payLabel').textContent='Verifying payment\u2026';
+    var payload={
+        razorpay_order_id:rzp.razorpay_order_id, razorpay_payment_id:rzp.razorpay_payment_id, razorpay_signature:rzp.razorpay_signature,
+        firstName:gv('firstName'), lastName:gv('lastName'), email:gv('email'), phone:gv('phone'), college:gv('college'),
+        domain:dom, mode:mode, city:city||'', stipend:stip, startDate:gv('startDate'), endDate:gv('endDate'),
+        note:gv('note')||'', plan:plan, consent:true
+    };
+    var vr;
+    try { vr=await fetch('/api/verify-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }
+    catch(e){ alert('Payment received but verification failed due to a network error.\n\nPlease contact us with your Payment ID: '+rzp.razorpay_payment_id+'\nEmail: '+CFG.EMAIL); resetPayBtn(btn); return; }
+    if(!vr.ok){ var eb={}; try{eb=await vr.json();}catch(_){} alert(eb.error||('Verification failed. Please contact support with Payment ID: '+rzp.razorpay_payment_id)); resetPayBtn(btn); return; }
+    showSuccess(rzp);
+}
+
+function showSuccess(rzp){
+    document.getElementById('sName').textContent =gv('firstName');
+    document.getElementById('sPlan').textContent =planName(plan);
+    document.getElementById('sEmail').textContent=gv('email');
+    document.getElementById('emailLink').href     ='mailto:'+CFG.EMAIL;
+    document.getElementById('waLink').href        ='https://wa.me/'+CFG.WA;
+    document.getElementById('sov').classList.add('open');
+}
 </script>
 </body>
 </html>

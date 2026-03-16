@@ -4,12 +4,14 @@
  *
  * Responsibilities (in order):
  *   1. Guard: RAZORPAY_KEY_SECRET must be non-empty (missing = forgeable HMAC)
- *   2. Validate plan (prototype-pollution-safe)
- *   3. Verify Razorpay HMAC SHA256 signature with timingSafeEqual
- *   4. Validate + sanitize form inputs (email format, CRLF stripping, truncation)
- *   5. Save to MongoDB (idempotent via unique index on razorpayOrderId)
- *   6. Alert operator on DB failure (fire-and-forget Slack/webhook)
- *   7. Send confirmation email via Resend (fire-and-forget)
+ *   2. Validate plan (prototype-pollution-safe via PLANS null-prototype object)
+ *   3. Validate consent as strict boolean true (DPDPA 2023)
+ *   4. Validate razorpay_signature is hex before Buffer.from (prevents silent decode errors)
+ *   5. Verify Razorpay HMAC SHA256 signature with timingSafeEqual
+ *   6. Sanitize form inputs (type guard, CRLF stripping, truncation)
+ *   7. Validate + compute duration server-side from startDate/endDate
+ *   8. Save to MongoDB (idempotent via unique index on razorpayOrderId)
+ *   9. Send confirmation email via Resend — only after DB save confirmed
  *
  * A 200 response means: payment is cryptographically verified.
  * DB/email failures are logged but do NOT cause a non-200 response.
@@ -17,16 +19,12 @@
 
 import crypto        from 'crypto';
 import { Resend }    from 'resend';
-import clientPromise from '../lib/mongodb.js';
-import { PLAN_AMOUNTS, PLAN_NAMES } from '../lib/plans.js';
+import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, ensureIndexes } from '../lib/mongodb.js';
+import { PLANS }     from '../lib/plans.js';
 
-// Singleton Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const config = { api: { bodyParser: { sizeLimit: '10kb' } } };
 
-// Indexes created once per cold start, not on every warm request
-let indexesEnsured = false;
-
-// ── Handler ──────────────────────────────────────────────────────────────────
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -34,7 +32,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed.' });
   }
 
-  // ── Guard: empty RAZORPAY_KEY_SECRET → predictable HMAC → signature forgery
+  // Guard: empty key → predictable HMAC → signature forgery
   if (!process.env.RAZORPAY_KEY_SECRET) {
     console.error('[verify-payment] RAZORPAY_KEY_SECRET is not configured.');
     return res.status(500).json({ error: 'Payment verification is unavailable.' });
@@ -42,33 +40,34 @@ export default async function handler(req, res) {
 
   const {
     razorpay_order_id, razorpay_payment_id, razorpay_signature,
-    // Applicant
     firstName, lastName, email, phone, college,
-    // Preferences
     domain, mode, city, stipend,
-    startDate, endDate, duration, note,
-    // Plan & consent
+    startDate, endDate, note,
     plan, consent,
   } = req.body || {};
 
-  // ── 1. Presence check ────────────────────────────────────────────────────
+  // ── 1. Presence check ─────────────────────────────────────────────────────
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: 'Missing Razorpay payment fields.' });
   }
 
-  // Prototype-pollution-safe plan validation
-  if (!plan || !Object.prototype.hasOwnProperty.call(PLAN_AMOUNTS, plan)) {
+  // Prototype-pollution-safe plan validation (PLANS has null prototype)
+  if (!plan || !Object.prototype.hasOwnProperty.call(PLANS, plan)) {
     return res.status(400).json({ error: 'Invalid plan.' });
   }
 
-  // DPDPA 2023: explicit consent is required for collecting personal data
-  if (!consent) {
+  // DPDPA 2023: explicit boolean true required — truthy strings/1 rejected
+  if (consent !== true) {
     return res.status(400).json({ error: 'Consent is required to process your application.' });
   }
 
-  // ── 2. Verify Razorpay signature ─────────────────────────────────────────
-  // Formula: HMAC_SHA256(order_id + "|" + payment_id, KEY_SECRET)
-  // timingSafeEqual prevents timing-based signature forgery attacks.
+  // ── 2. Hex-format validation before Buffer.from ───────────────────────────
+  if (typeof razorpay_signature !== 'string' || !/^[0-9a-f]+$/i.test(razorpay_signature)) {
+    console.error('[verify-payment] Invalid signature format', { razorpay_order_id, razorpay_payment_id });
+    return res.status(400).json({ error: 'Payment verification failed.' });
+  }
+
+  // ── 3. Verify Razorpay HMAC SHA256 ───────────────────────────────────────
   const sigPayload  = `${razorpay_order_id}|${razorpay_payment_id}`;
   const expectedHex = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -85,8 +84,9 @@ export default async function handler(req, res) {
     isValid = false;
   }
 
-  // Extract only the first IP from the (potentially multi-value) header
-  const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null;
+  // Extract only the first IP; validate format (IPv4/IPv6) to prevent log injection
+  const rawIp    = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const clientIp = /^[\d.:[\]a-fA-F]+$/.test(rawIp) ? rawIp : null;
 
   if (!isValid) {
     console.error('[verify-payment] Signature mismatch', {
@@ -99,43 +99,74 @@ export default async function handler(req, res) {
     });
   }
 
-  // ── 3. Sanitize inputs ───────────────────────────────────────────────────
-  // Strip control characters (CRLF / tab injection) then trim and truncate
-  const s = (v, max = 200) => String(v || '').replace(/[\r\n\t]/g, ' ').trim().slice(0, max);
+  // ── 4. Sanitize inputs ────────────────────────────────────────────────────
+  // Type guard: coerce non-strings to '' so replace/slice don't throw on numbers/null
+  const s = (v, max = 200) =>
+    (typeof v === 'string' ? v : String(v ?? '')).replace(/[\r\n\t]/g, ' ').trim().slice(0, max);
 
-  // Validate email format — an invalid email means the confirmation never arrives
   const emailVal = s(email, 200).toLowerCase();
   if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
     return res.status(400).json({ error: 'Invalid email address.' });
   }
 
-  const amount = PLAN_AMOUNTS[plan];
+  // ── 5. Server-side date + duration validation ─────────────────────────────
+  const sdStr = s(startDate, 20);
+  const edStr = s(endDate, 20);
+  const sdMs  = Date.parse(sdStr);
+  const edMs  = Date.parse(edStr);
+
+  if (!sdStr || !edStr || isNaN(sdMs) || isNaN(edMs)) {
+    return res.status(400).json({ error: 'Invalid start or end date.' });
+  }
+  if (edMs <= sdMs) {
+    return res.status(400).json({ error: 'End date must be after start date.' });
+  }
+
+  const durationDays = Math.round((edMs - sdMs) / 864e5);
+  if (durationDays < 30) {
+    return res.status(400).json({ error: 'Minimum internship duration is 30 days.' });
+  }
+  if (durationDays > 365) {
+    return res.status(400).json({ error: 'Maximum internship duration is 365 days.' });
+  }
+
+  // Compute human-readable duration server-side — not trusted from client
+  const mo  = Math.floor(durationDays / 30);
+  const dd  = durationDays % 30;
+  const durationStr =
+    (mo  > 0 ? mo  + ' month' + (mo  > 1 ? 's' : '') : '') +
+    (mo  > 0 && dd > 0 ? ' '  : '') +
+    (dd  > 0 ? dd  + ' day'   + (dd  > 1 ? 's' : '') : '');
+
+  const amount = PLANS[plan].amount;
 
   const doc = {
     // Applicant
-    firstName:  s(firstName, 100),
-    lastName:   s(lastName, 100),
-    email:      emailVal,
-    phone:      s(phone, 20),
-    college:    s(college, 300),
+    firstName: s(firstName, 100),
+    lastName:  s(lastName,  100),
+    email:     emailVal,
+    phone:     s(phone, 20),
+    college:   s(college, 300),
     // Preferences
-    domain:     s(domain, 200),
-    mode:       s(mode, 50),
-    city:       city ? s(city, 100) : null,
-    stipend:    s(stipend, 50),
-    startDate:  s(startDate, 20),
-    endDate:    s(endDate, 20),
-    duration:   s(duration, 100),
-    note:       note ? s(note, 2000) : null,
+    domain:   s(domain, 200),
+    mode:     s(mode, 50),
+    city:     city ? s(city, 100) : null,
+    stipend:  s(stipend, 50),
+    // Dates stored as Date objects for proper MongoDB sorting/querying
+    startDate:    new Date(sdMs),
+    endDate:      new Date(edMs),
+    durationDays,
+    durationStr,
+    note: note ? s(note, 2000) : null,
     // Plan & Payment
     plan,
-    planName:          PLAN_NAMES[plan],
-    amount,                              // INR integer
-    amountPaise:       amount * 100,     // paise integer (accounting safe)
+    planName:          PLANS[plan].name,
+    amount,
     razorpayOrderId:   razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
-    razorpaySignature: razorpay_signature,
-    paymentStatus:     'paid',
+    // razorpaySignature intentionally omitted — not needed post-verification
+    paymentStatus: 'paid',
+    source:        'browser',
     // Consent (DPDPA 2023)
     consentGiven:     true,
     consentTimestamp: new Date(),
@@ -144,88 +175,78 @@ export default async function handler(req, res) {
     ipAddress: clientIp ? s(clientIp, 45) : null,
   };
 
-  // ── 4. Save to MongoDB ────────────────────────────────────────────────────
+  // ── 6. Save to MongoDB ────────────────────────────────────────────────────
+  let dbSaved = false;
   try {
     const client = await clientPromise;
-    const col    = client.db('certifybridge').collection('applications');
+    const col    = client.db(DB_NAME).collection(COLLECTION_APPLICATIONS);
 
-    // ensureIndexes runs only once per cold start (module-level flag)
     await ensureIndexes(col);
-
-    // insertOne with unique index on razorpayOrderId:
-    //   - First call  → saves the document
-    //   - Retry call  → throws error code 11000 (duplicate key) → silently ignored
     await col.insertOne(doc);
+    dbSaved = true;
     console.log('[verify-payment] Application saved:', razorpay_order_id);
 
   } catch (dbErr) {
     if (dbErr.code === 11000) {
-      // Duplicate — already saved on a previous attempt. Safe to ignore.
+      // Duplicate — already saved on a previous attempt. Safe to treat as saved.
+      dbSaved = true;
       console.log('[verify-payment] Duplicate save ignored:', razorpay_order_id);
     } else {
-      // Real DB error — payment is confirmed but record is missing.
-      // Alert operator immediately so no application is silently lost.
       console.error('[verify-payment] MongoDB save error:', dbErr.message);
       if (process.env.ALERT_WEBHOOK_URL) {
         fetch(process.env.ALERT_WEBHOOK_URL, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({
-            text: `[AstraForge] DB save failed — payment ${razorpay_payment_id} (order ${razorpay_order_id}): ${dbErr.message}`,
+            text: `[CertifyBridge] DB save failed — payment ${razorpay_payment_id} (order ${razorpay_order_id}): ${dbErr.message}`,
           }),
         }).catch(() => {}); // fire-and-forget
       }
     }
   }
 
-  // ── 5. Send confirmation email (fire-and-forget) ──────────────────────────
-  // Pass the already-sanitised doc values — no double-sanitisation
-  sendConfirmationEmail(doc)
-    .catch(err => console.error('[verify-payment] Email error (non-blocking):', err.message));
+  // ── 7. Send confirmation email (only if record was saved) ─────────────────
+  if (dbSaved && process.env.RESEND_API_KEY) {
+    sendConfirmationEmail(doc)
+      .catch(err => console.error('[verify-payment] Email error (non-blocking):', err.message));
+  }
 
   return res.status(200).json({ success: true });
 }
 
-// ── Index setup (once per cold start) ────────────────────────────────────────
-
-async function ensureIndexes(col) {
-  if (indexesEnsured) return;
-  // Run both in parallel — halves cold-start DB setup time
-  await Promise.all([
-    col.createIndex(
-      { razorpayOrderId: 1 },
-      { unique: true, sparse: true, name: 'razorpayOrderId_unique' }
-    ),
-    col.createIndex({ email: 1 }, { name: 'email_lookup' }),
-  ]);
-  indexesEnsured = true;
-}
-
-// ── HTML escaping ─────────────────────────────────────────────────────────────
+// ── HTML escaping ──────────────────────────────────────────────────────────────
 
 function he(str) {
   return String(str)
-    .replace(/&/g,  '&amp;')
-    .replace(/</g,  '&lt;')
-    .replace(/>/g,  '&gt;')
-    .replace(/"/g,  '&quot;')
-    .replace(/'/g,  '&#x27;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
 }
 
-// ── Confirmation email ────────────────────────────────────────────────────────
+// ── Confirmation email ─────────────────────────────────────────────────────────
 
 async function sendConfirmationEmail(doc) {
   const {
     firstName, email,
-    domain, mode, city, duration, startDate, endDate, stipend,
+    domain, mode, city, durationStr, startDate, endDate, stipend,
     planName, amount, razorpayPaymentId,
   } = doc;
 
-  const modeDisplay  = city ? `${mode} · ${city}` : mode;
-  const amountFmt    = `₹${amount.toLocaleString('en-IN')}`;
+  const resend      = new Resend(process.env.RESEND_API_KEY);
+  const modeDisplay = city ? `${mode} · ${city}` : mode;
+  const amountFmt   = `₹${amount.toLocaleString('en-IN')}`;
   const companyName  = process.env.COMPANY_NAME  || 'CertifyBridge';
   const supportEmail = process.env.SUPPORT_EMAIL || 'contact@certifybridge.com';
   const waNumber     = process.env.WHATSAPP_NUMBER || '';
+
+  const sdLabel = startDate instanceof Date
+    ? startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : String(startDate);
+  const edLabel = endDate instanceof Date
+    ? endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : String(endDate);
 
   const { data, error } = await resend.emails.send({
     from:     process.env.FROM_EMAIL || 'onboarding@resend.dev',
@@ -240,7 +261,7 @@ async function sendConfirmationEmail(doc) {
       `Plan: ${planName}`,
       `Domain: ${domain}`,
       `Mode: ${modeDisplay}`,
-      `Duration: ${duration} (${startDate} → ${endDate})`,
+      `Duration: ${durationStr} (${sdLabel} → ${edLabel})`,
       `Stipend Range: ${stipend}`,
       `Payment ID: ${razorpayPaymentId}`,
       '',
@@ -324,7 +345,7 @@ async function sendConfirmationEmail(doc) {
               </tr>
               <tr>
                 <td style="padding:14px 16px;border-bottom:1px solid #ffffff12;font-size:12px;color:#ffffff66;text-transform:uppercase;letter-spacing:.5px;">Duration</td>
-                <td style="padding:14px 16px;border-bottom:1px solid #ffffff12;font-size:14px;color:#fff;font-weight:600;">${he(duration)}</td>
+                <td style="padding:14px 16px;border-bottom:1px solid #ffffff12;font-size:14px;color:#fff;font-weight:600;">${he(durationStr)} (${he(sdLabel)} → ${he(edLabel)})</td>
               </tr>
               <tr>
                 <td style="padding:14px 16px;border-bottom:1px solid #ffffff12;font-size:12px;color:#ffffff66;text-transform:uppercase;letter-spacing:.5px;">Stipend Range</td>

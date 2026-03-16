@@ -6,13 +6,16 @@
  * The client NEVER supplies the amount — it only supplies the plan name.
  * This prevents price manipulation via DevTools.
  *
- * Request body:  { plan: "new" | "pro" | "hacker" }
+ * Request body:  { plan: "noob" | "pro" | "hacker" }
  * Response:      { orderId, amount, currency }
  */
 
 import Razorpay from 'razorpay';
 import crypto   from 'crypto';
-import { PLAN_AMOUNTS, PLAN_NAMES } from '../lib/plans.js';
+import { PLANS } from '../lib/plans.js';
+
+// Vercel body parser — 10 KB is generous for a plan-selection payload
+export const config = { api: { bodyParser: { sizeLimit: '10kb' } } };
 
 // Fail at cold start if credentials are missing — don't wait for first request
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -33,43 +36,37 @@ export default async function handler(req, res) {
 
   const { plan } = req.body || {};
 
-  // Prototype-pollution-safe validation — plain object literals inherit
-  // toString, __proto__, etc. which would be truthy and bypass a naive check.
-  if (!plan || !Object.prototype.hasOwnProperty.call(PLAN_AMOUNTS, plan)) {
+  // Prototype-pollution-safe validation
+  if (!plan || !Object.prototype.hasOwnProperty.call(PLANS, plan)) {
     return res.status(400).json({
-      error: `Invalid plan "${plan}". Must be one of: new, pro, hacker.`,
+      error: `Invalid plan "${plan}". Must be one of: ${Object.keys(PLANS).join(', ')}.`,
     });
   }
 
-  const amountINR   = PLAN_AMOUNTS[plan];
-  const amountPaise = amountINR * 100; // Razorpay requires paise (1 INR = 100 paise)
+  const { amount: amountINR, name: planName } = PLANS[plan];
+  const amountPaise = amountINR * 100; // Razorpay requires paise
 
   try {
-    // Append random bytes to avoid collision when two requests land in the same ms
     const receipt = `rcpt_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
     const order = await razorpay.orders.create({
       amount:   amountPaise,
       currency: 'INR',
       receipt,
-      notes: {
-        plan,
-        planName: PLAN_NAMES[plan],
-      },
+      notes: { plan, planName },
     });
 
     return res.status(200).json({
-      orderId:  order.id,       // e.g. "order_xxxxxxxxxxxxxxxxx" — send to frontend
-      amount:   amountINR,      // INR, for display only
+      orderId:  order.id,
+      amount:   amountINR,
       currency: order.currency,
     });
 
   } catch (err) {
     console.error('[create-order] Razorpay error:', err);
-
-    const statusCode = err.statusCode || 500;
     const message    = err?.error?.description || 'Could not create payment order. Please try again.';
-
-    return res.status(statusCode || 500).json({ error: message });
+    // Map upstream Razorpay codes to safe client-facing codes (avoids leaking gateway internals)
+    const clientCode = err.statusCode >= 400 && err.statusCode < 500 ? 400 : 503;
+    return res.status(clientCode).json({ error: message });
   }
 }

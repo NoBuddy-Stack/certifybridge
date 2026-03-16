@@ -14,18 +14,17 @@
  *   4. Copy the Webhook Secret → set as RAZORPAY_WEBHOOK_SECRET env var
  *      (IMPORTANT: this is a DIFFERENT secret from RAZORPAY_KEY_SECRET)
  *
- * Note on body parsing: Vercel auto-parses JSON bodies, so we re-stringify
- * req.body for HMAC verification. This is safe because Razorpay sends simple,
- * consistently-structured JSON. For maximum robustness consider a raw-body
- * middleware if Razorpay ever changes their payload format.
+ * Body parsing: disabled (bodyParser: false) so we receive the raw bytes for
+ * HMAC verification. Re-stringifying a parsed body risks JSON key-order
+ * differences that would silently break signature verification.
  */
 
 import crypto        from 'crypto';
-import clientPromise from '../lib/mongodb.js';
-import { PLAN_AMOUNTS, PLAN_NAMES } from '../lib/plans.js';
+import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, ensureIndexes } from '../lib/mongodb.js';
+import { PLANS }     from '../lib/plans.js';
 
-// Indexes created once per cold start
-let indexesEnsured = false;
+// Disable Vercel's body parser — raw bytes are required for correct HMAC
+export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -38,6 +37,21 @@ export default async function handler(req, res) {
     return res.status(500).end();
   }
 
+  // ── Read raw body ─────────────────────────────────────────────────────────
+  // In Vercel (bodyParser:false), req is a readable stream.
+  // In local dev, server.js detects bodyParser:false and passes a Buffer as req.body.
+  let rawBody;
+  if (Buffer.isBuffer(req.body)) {
+    rawBody = req.body;
+  } else {
+    rawBody = await new Promise((resolve, reject) => {
+      const chunks = [];
+      req.on('data', c => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
+      req.on('end',  () => resolve(Buffer.concat(chunks)));
+      req.on('error', reject);
+    });
+  }
+
   // ── Verify webhook signature ───────────────────────────────────────────────
   const signature = req.headers['x-razorpay-signature'];
   if (!signature) {
@@ -45,8 +59,6 @@ export default async function handler(req, res) {
     return res.status(400).end();
   }
 
-  // Vercel auto-parses JSON bodies; re-stringify for HMAC verification
-  const rawBody    = JSON.stringify(req.body);
   const expectedSig = crypto
     .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
     .update(rawBody)
@@ -66,9 +78,20 @@ export default async function handler(req, res) {
     return res.status(400).end();
   }
 
-  // ── Handle payment.captured ────────────────────────────────────────────────
-  if (req.body?.event === 'payment.captured') {
-    const payment = req.body?.payload?.payment?.entity;
+  // ── Parse body ────────────────────────────────────────────────────────────
+  let body;
+  try {
+    body = JSON.parse(rawBody.toString('utf8'));
+  } catch {
+    console.error('[webhook] Could not parse JSON body');
+    return res.status(400).end();
+  }
+
+  // ── Route by event type ───────────────────────────────────────────────────
+  const event = body?.event;
+
+  if (event === 'payment.captured') {
+    const payment = body?.payload?.payment?.entity;
     if (!payment) return res.status(200).end();
 
     const orderId   = payment.order_id;
@@ -80,13 +103,14 @@ export default async function handler(req, res) {
       return res.status(200).end(); // 200 so Razorpay doesn't retry indefinitely
     }
 
-    const amount = planKey && Object.prototype.hasOwnProperty.call(PLAN_AMOUNTS, planKey)
-      ? PLAN_AMOUNTS[planKey]
+    const planValid = planKey && Object.prototype.hasOwnProperty.call(PLANS, planKey);
+    const amount    = planValid
+      ? PLANS[planKey].amount
       : Math.round(payment.amount / 100); // fallback: convert paise from Razorpay
 
     try {
       const client = await clientPromise;
-      const col    = client.db('certifybridge').collection('applications');
+      const col    = client.db(DB_NAME).collection(COLLECTION_APPLICATIONS);
 
       await ensureIndexes(col);
 
@@ -100,11 +124,9 @@ export default async function handler(req, res) {
             razorpayPaymentId: paymentId,
             paymentStatus:     'paid',
             plan:              planKey || null,
-            planName:          planKey && Object.prototype.hasOwnProperty.call(PLAN_NAMES, planKey)
-                                 ? PLAN_NAMES[planKey] : null,
+            planName:          planValid ? PLANS[planKey].name : null,
             amount,
-            amountPaise:       amount * 100,
-            source:            'webhook',  // distinguishes webhook-only records
+            source:            'webhook',
             createdAt:         new Date(),
           },
         },
@@ -122,16 +144,11 @@ export default async function handler(req, res) {
       // Return 500 so Razorpay retries — this is a recoverable transient error
       return res.status(500).end();
     }
+
+  } else {
+    // Log unhandled events so we know what Razorpay is sending
+    console.log('[webhook] Unhandled event type:', event);
   }
 
   return res.status(200).json({ status: 'ok' });
-}
-
-async function ensureIndexes(col) {
-  if (indexesEnsured) return;
-  await Promise.all([
-    col.createIndex({ razorpayOrderId: 1 }, { unique: true, sparse: true, name: 'razorpayOrderId_unique' }),
-    col.createIndex({ email: 1 }, { name: 'email_lookup' }),
-  ]);
-  indexesEnsured = true;
 }
