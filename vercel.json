@@ -1,9 +1,10 @@
 {
   "version": 2,
   "regions": ["bom1"],
+  "outputDirectory": "public",
   "routes": [
-    { "src": "/",      "dest": "/public/apply.html" },
-    { "src": "/apply", "dest": "/public/apply.html" }
+    { "src": "/",      "dest": "/apply.html" },
+    { "src": "/apply", "dest": "/apply.html" }
   ],
   "functions": {
     "api/config.js":         { "maxDuration": 3  },
