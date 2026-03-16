@@ -12,7 +12,8 @@
 
 import Razorpay from 'razorpay';
 import crypto   from 'crypto';
-import { PLANS } from '../lib/plans.js';
+import { PLANS }          from '../lib/plans.js';
+import { checkRateLimit } from '../lib/rate-limit.js';
 
 // Vercel body parser — 10 KB is generous for a plan-selection payload
 export const config = { api: { bodyParser: { sizeLimit: '10kb' } } };
@@ -32,6 +33,13 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed.' });
+  }
+
+  // Rate limit: 10 order-creation attempts per IP per minute
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  if (!checkRateLimit(ip, { max: 10, windowMs: 60_000, key: 'create-order' })) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   }
 
   const { plan } = req.body || {};

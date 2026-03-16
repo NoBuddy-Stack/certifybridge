@@ -3,26 +3,49 @@
  * POST /api/verify-payment
  *
  * Responsibilities (in order):
- *   1. Guard: RAZORPAY_KEY_SECRET must be non-empty (missing = forgeable HMAC)
- *   2. Validate plan (prototype-pollution-safe via PLANS null-prototype object)
- *   3. Validate consent as strict boolean true (DPDPA 2023)
- *   4. Validate razorpay_signature is hex before Buffer.from (prevents silent decode errors)
- *   5. Verify Razorpay HMAC SHA256 signature with timingSafeEqual
- *   6. Sanitize form inputs (type guard, CRLF stripping, truncation)
- *   7. Validate + compute duration server-side from startDate/endDate
- *   8. Save to MongoDB (idempotent via unique index on razorpayOrderId)
- *   9. Send confirmation email via Resend — only after DB save confirmed
+ *   1. Rate limit (in-process sliding window)
+ *   2. Guard: RAZORPAY_KEY_SECRET must be non-empty (missing = forgeable HMAC)
+ *   3. Validate plan (prototype-pollution-safe via PLANS null-prototype object)
+ *   4. Validate consent as strict boolean true (DPDPA 2023)
+ *   5. Validate razorpay_signature is hex before Buffer.from
+ *   6. Verify Razorpay HMAC SHA256 signature with timingSafeEqual
+ *      — skipped when RAZORPAY_SKIP_SIG_CHECK=true AND NODE_ENV≠production
+ *   7. Cross-check plan against Razorpay order notes (prevents plan substitution)
+ *   8. Sanitize form inputs (type guard, CRLF stripping, truncation)
+ *   9. Validate + compute duration server-side from startDate/endDate
+ *  10. Save to MongoDB (idempotent via unique index on razorpayOrderId)
+ *  11. Send confirmation email via Resend — only after DB save confirmed
  *
  * A 200 response means: payment is cryptographically verified.
  * DB/email failures are logged but do NOT cause a non-200 response.
+ *
+ * Test mode (staging only):
+ *   Set NODE_ENV=test and RAZORPAY_SKIP_SIG_CHECK=true to bypass HMAC
+ *   verification and order cross-check for integration testing with
+ *   synthetic payment IDs. NEVER set these in production.
  */
 
 import crypto        from 'crypto';
+import Razorpay      from 'razorpay';
 import { Resend }    from 'resend';
 import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, ensureIndexes } from '../lib/mongodb.js';
 import { PLANS }     from '../lib/plans.js';
+import { checkRateLimit } from '../lib/rate-limit.js';
 
 export const config = { api: { bodyParser: { sizeLimit: '10kb' } } };
+
+// Module-level Razorpay singleton — reused across warm invocations
+// Instantiated lazily inside handler to avoid cold-start crash when keys are missing
+let _razorpay = null;
+function getRazorpay() {
+  if (!_razorpay && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    _razorpay = new Razorpay({
+      key_id:     process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return _razorpay;
+}
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +53,13 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed.' });
+  }
+
+  // ── 1. Rate limit ─────────────────────────────────────────────────────────
+  const reqIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  if (!checkRateLimit(reqIp, { max: 5, windowMs: 60_000, key: 'verify' })) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   }
 
   // Guard: empty key → predictable HMAC → signature forgery
@@ -61,45 +91,83 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Consent is required to process your application.' });
   }
 
-  // ── 2. Hex-format validation before Buffer.from ───────────────────────────
-  if (typeof razorpay_signature !== 'string' || !/^[0-9a-f]+$/i.test(razorpay_signature)) {
-    console.error('[verify-payment] Invalid signature format', { razorpay_order_id, razorpay_payment_id });
-    return res.status(400).json({ error: 'Payment verification failed.' });
-  }
+  // Test-mode bypass — only when NODE_ENV≠production AND explicit opt-in flag is set.
+  // Allows integration tests / agents to submit synthetic payment IDs without a browser.
+  // NEVER set RAZORPAY_SKIP_SIG_CHECK in the Vercel production environment.
+  const skipSigCheck =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.RAZORPAY_SKIP_SIG_CHECK === 'true';
 
-  // ── 3. Verify Razorpay HMAC SHA256 ───────────────────────────────────────
-  const sigPayload  = `${razorpay_order_id}|${razorpay_payment_id}`;
-  const expectedHex = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-    .update(sigPayload)
-    .digest('hex');
+  if (!skipSigCheck) {
+    // ── 2. Hex-format validation before Buffer.from ─────────────────────────
+    if (typeof razorpay_signature !== 'string' || !/^[0-9a-f]+$/i.test(razorpay_signature)) {
+      console.error('[verify-payment] Invalid signature format', { razorpay_order_id, razorpay_payment_id });
+      return res.status(400).json({ error: 'Payment verification failed.' });
+    }
 
-  let isValid = false;
-  try {
-    const sigBuf      = Buffer.from(razorpay_signature, 'hex');
-    const expectedBuf = Buffer.from(expectedHex, 'hex');
-    isValid = sigBuf.length === expectedBuf.length &&
-              crypto.timingSafeEqual(sigBuf, expectedBuf);
-  } catch {
-    isValid = false;
-  }
+    // ── 3. Verify Razorpay HMAC SHA256 ────────────────────────────────────
+    const sigPayload  = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedHex = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(sigPayload)
+      .digest('hex');
 
-  // Extract only the first IP; validate format (IPv4/IPv6) to prevent log injection
-  const rawIp    = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  const clientIp = /^[\d.:[\]a-fA-F]+$/.test(rawIp) ? rawIp : null;
+    let isValid = false;
+    try {
+      const sigBuf      = Buffer.from(razorpay_signature, 'hex');
+      const expectedBuf = Buffer.from(expectedHex, 'hex');
+      isValid = sigBuf.length === expectedBuf.length &&
+                crypto.timingSafeEqual(sigBuf, expectedBuf);
+    } catch {
+      isValid = false;
+    }
 
-  if (!isValid) {
-    console.error('[verify-payment] Signature mismatch', {
-      razorpay_order_id,
-      razorpay_payment_id,
-      ip: clientIp,
+    if (!isValid) {
+      const clientIp = /^[\d.:[\]a-fA-F]+$/.test(reqIp) ? reqIp : null;
+      console.error('[verify-payment] Signature mismatch', {
+        razorpay_order_id,
+        razorpay_payment_id,
+        ip: clientIp,
+      });
+      return res.status(400).json({
+        error: 'Payment verification failed. Please contact support with your payment ID: ' + razorpay_payment_id,
+      });
+    }
+
+    // ── 4. Cross-check plan against the Razorpay order record ─────────────
+    // HMAC proves the payment is genuine but does NOT encode the plan.
+    // An attacker can pay noob (₹499) then submit plan:"hacker" at verify time.
+    // Fetching the order and reading notes.plan closes this substitution attack.
+    const rzp = getRazorpay();
+    if (rzp) {
+      try {
+        const order = await rzp.orders.fetch(razorpay_order_id);
+        const orderPlan = order?.notes?.plan;
+        if (orderPlan && orderPlan !== plan) {
+          console.error('[verify-payment] Plan mismatch', {
+            razorpay_order_id, submitted: plan, inOrder: orderPlan,
+          });
+          return res.status(400).json({ error: 'Plan mismatch. Payment rejected.' });
+        }
+        // If orderPlan is missing (e.g. very old order), allow through with a warning
+        if (!orderPlan) {
+          console.warn('[verify-payment] Order has no plan in notes:', razorpay_order_id);
+        }
+      } catch (err) {
+        // Non-fatal: if Razorpay API is down, log and continue
+        console.warn('[verify-payment] Could not fetch order for cross-check:', err.message);
+      }
+    }
+
+  } else {
+    console.warn('[verify-payment] HMAC and order cross-check skipped (test mode)', {
+      razorpay_order_id, razorpay_payment_id,
     });
-    return res.status(400).json({
-      error: 'Payment verification failed. Please contact support with your payment ID: ' + razorpay_payment_id,
-    });
   }
 
-  // ── 4. Sanitize inputs ────────────────────────────────────────────────────
+  const clientIp = /^[\d.:[\]a-fA-F]+$/.test(reqIp) ? reqIp : null;
+
+  // ── 5. Sanitize inputs ────────────────────────────────────────────────────
   // Type guard: coerce non-strings to '' so replace/slice don't throw on numbers/null
   const s = (v, max = 200) =>
     (typeof v === 'string' ? v : String(v ?? '')).replace(/[\r\n\t]/g, ' ').trim().slice(0, max);
@@ -109,7 +177,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid email address.' });
   }
 
-  // ── 5. Server-side date + duration validation ─────────────────────────────
+  // ── 6. Server-side date + duration validation ────────────────────────────
   const sdStr = s(startDate, 20);
   const edStr = s(endDate, 20);
   const sdMs  = Date.parse(sdStr);
@@ -205,7 +273,21 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── 7. Send confirmation email (only if record was saved) ─────────────────
+  // ── 7. Log email divergence between Razorpay-captured and submitted values ─
+  // Fire-and-forget: non-blocking, never rejects the payment.
+  if (!skipSigCheck) {
+    const rzp = getRazorpay();
+    if (rzp) {
+      rzp.payments.fetch(razorpay_payment_id).then(payment => {
+        if (payment?.email && payment.email.toLowerCase() !== emailVal) {
+          console.warn('[verify-payment] Email divergence: razorpay=%s submitted=%s orderId=%s',
+            payment.email, emailVal, razorpay_order_id);
+        }
+      }).catch(() => {}); // non-blocking
+    }
+  }
+
+  // ── 8. Send confirmation email (only if record was saved) ─────────────────
   if (dbSaved && process.env.RESEND_API_KEY) {
     sendConfirmationEmail(doc)
       .catch(err => console.error('[verify-payment] Email error (non-blocking):', err.message));

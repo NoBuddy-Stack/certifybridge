@@ -51,10 +51,12 @@
         nav {
             position: fixed; top: 0; left: 0; right: 0; height: 58px;
             background: rgba(8,8,8,0.35);
-            backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+            /* Reduced to blur(8px) — halves GPU compositing cost on mobile vs 16px */
+            backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%);
             border-bottom: 1px solid rgba(255,255,255,0.06);
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 48px; z-index: 100;
+            will-change: transform; /* promote to GPU layer — isolates compositing */
         }
         .nav-logo { display: flex; align-items: center; text-decoration: none; color: var(--text); gap: 0; }
         .nav-links { display: flex; align-items: center; gap: 36px; }
@@ -134,8 +136,7 @@
         .mc { background: var(--bg-card); border: 1px solid var(--border); padding: 24px 14px 20px; cursor: pointer; transition: all .2s; text-align: center; user-select: none; position: relative; }
         .mc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); }
         .mc.sel { border-color: var(--border-hi); background: rgba(255,255,255,0.05); }
-        .mc.sel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
-        .mc.sel::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .mc.sel { --cb-sz: 10px; --cb-off: 0px; }
         .mc-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--dim); }
         .mc.sel .mc-icon { color: var(--text); }
         .mc-name { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
@@ -157,11 +158,15 @@
         .sch:hover { background: var(--bg-hover); border-color: rgba(255,255,255,0.22); color: var(--muted); }
         .sch.sel { border-color: var(--border-hi); color: var(--text); background: rgba(255,255,255,0.05); }
 
+        /* ── CORNER BRACKET UTILITY ── */
+        /* Single definition used by .btn-bracket, .pcard.sel, .osb, .dlg, .sbox, .pay-btn */
+        .cb { position: relative; }
+        .cb::before { content: ''; position: absolute; top: calc(-1px - var(--cb-off, 1px)); left: calc(-1px - var(--cb-off, 1px)); width: var(--cb-sz, 10px); height: var(--cb-sz, 10px); border-top: 1px solid var(--cb-color, var(--text)); border-left: 1px solid var(--cb-color, var(--text)); }
+        .cb::after  { content: ''; position: absolute; bottom: calc(-1px - var(--cb-off, 1px)); right: calc(-1px - var(--cb-off, 1px)); width: var(--cb-sz, 10px); height: var(--cb-sz, 10px); border-bottom: 1px solid var(--cb-color, var(--text)); border-right: 1px solid var(--cb-color, var(--text)); }
+
         /* ── NAV BUTTONS ── */
         .nav-b { display: flex; align-items: center; justify-content: space-between; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); }
-        .btn-bracket { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; transition: all .2s; outline: none; text-transform: uppercase; }
-        .btn-bracket::before { content: ''; position: absolute; top: -2px; left: -2px; width: 10px; height: 10px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
-        .btn-bracket::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .btn-bracket { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; transition: all .2s; outline: none; text-transform: uppercase; --cb-sz: 10px; --cb-off: 1px; }
         .btn-bracket:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.6); }
         .btn-bracket:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 14px 16px; background: transparent; border: none; color: var(--dim); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; transition: color .2s; outline: none; text-transform: uppercase; }
@@ -181,8 +186,7 @@
         .pcard.featured { border-color: rgba(255,255,255,0.22); padding: 40px 22px; margin: -16px 0; background: #0f0f0f; z-index: 1; border-left: 1px solid rgba(255,255,255,0.22); border-right: 1px solid rgba(255,255,255,0.22); }
         .pcard.sel { border-color: var(--border-hi) !important; background: rgba(255,255,255,0.05); }
         .pcard.sel + .pcard { border-left: none; }
-        .pcard.sel::before { content: ''; position: absolute; top: -2px; left: -2px; width: 14px; height: 14px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
-        .pcard.sel::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .pcard.sel { --cb-sz: 14px; --cb-off: 1px; }
         .plan-tier { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.12em; margin-bottom: 12px; }
         .plan-price { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; line-height: 1; }
         .plan-price sup { font-size: 20px; vertical-align: top; margin-top: 10px; display: inline-block; font-weight: 700; }
@@ -204,8 +208,7 @@
 
         /* ── ORDER SUMMARY ── */
         .osb { border: 1px solid var(--border); padding: 22px; margin-bottom: 22px; display: none; position: relative; }
-        .osb::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 1px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.3); }
-        .osb::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-bottom: 1px solid rgba(255,255,255,0.3); border-right: 1px solid rgba(255,255,255,0.3); }
+        .osb { --cb-sz: 12px; --cb-off: 0px; --cb-color: rgba(255,255,255,0.3); }
         .osb-title { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 16px; }
         .or { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
         .or:last-child { border-bottom: none; }
@@ -220,8 +223,7 @@
         .consent-wrap input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: #fff; cursor: pointer; }
         .consent-wrap a { color: rgba(255,255,255,0.45); }
         .pay-btn { width: 100%; position: relative; padding: 17px; font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--text); color: #000; border: none; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .pay-btn::before { content: ''; position: absolute; top: -3px; left: -3px; width: 12px; height: 12px; border-top: 1px solid var(--text); border-left: 1px solid var(--text); }
-        .pay-btn::after  { content: ''; position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-bottom: 1px solid var(--text); border-right: 1px solid var(--text); }
+        .pay-btn { --cb-sz: 12px; --cb-off: 2px; }
         .pay-btn:hover { background: rgba(255,255,255,0.9); }
         .pay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .pay-note { font-family: var(--mono); font-size: 10px; color: var(--dim); text-align: center; margin-top: 14px; letter-spacing: 0.08em; }
@@ -230,8 +232,7 @@
         .ov-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s; }
         .ov-bg.open { opacity: 1; pointer-events: all; }
         .dlg { background: #0c0c0c; border: 1px solid rgba(255,255,255,0.12); padding: 36px; width: 100%; max-width: 440px; transform: scale(.95) translateY(12px); transition: transform .22s; position: relative; }
-        .dlg::before { content: ''; position: absolute; top: -1px; left: -1px; width: 14px; height: 14px; border-top: 1px solid rgba(255,255,255,0.4); border-left: 1px solid rgba(255,255,255,0.4); }
-        .dlg::after  { content: ''; position: absolute; bottom: -1px; right: -1px; width: 14px; height: 14px; border-bottom: 1px solid rgba(255,255,255,0.4); border-right: 1px solid rgba(255,255,255,0.4); }
+        .dlg { --cb-sz: 14px; --cb-off: 0px; --cb-color: rgba(255,255,255,0.4); }
         .ov-bg.open .dlg { transform: scale(1) translateY(0); }
         .dlg-tag { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 14px; display: block; }
         .dlg h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.03em; }
@@ -242,8 +243,7 @@
         .sov { position: fixed; inset: 0; background: rgba(0,0,0,0.93); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .3s; }
         .sov.open { opacity: 1; pointer-events: all; }
         .sbox { background: #090909; border: 1px solid rgba(255,255,255,0.12); padding: 52px 44px; width: 100%; max-width: 500px; text-align: center; position: relative; transform: scale(.92) translateY(16px); transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
-        .sbox::before { content: ''; position: absolute; top: -2px; left: -2px; width: 18px; height: 18px; border-top: 1px solid rgba(255,255,255,0.5); border-left: 1px solid rgba(255,255,255,0.5); }
-        .sbox::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-bottom: 1px solid rgba(255,255,255,0.5); border-right: 1px solid rgba(255,255,255,0.5); }
+        .sbox { --cb-sz: 18px; --cb-off: 1px; --cb-color: rgba(255,255,255,0.5); }
         .sov.open .sbox { transform: scale(1) translateY(0); }
         .sico { width: 64px; height: 64px; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 28px; }
         .s-tag { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.14em; margin-bottom: 16px; display: block; }
@@ -357,7 +357,7 @@
         </div>
         <div class="nav-b">
             <div></div>
-            <button class="btn-bracket" onclick="goTo(2)">Continue &rarr;</button>
+            <button class="btn-bracket cb" onclick="goTo(2)">Continue &rarr;</button>
         </div>
     </div>
 
@@ -406,21 +406,21 @@
         <div class="fg">
             <label>Preferred Mode <span class="req">*</span></label>
             <div class="mgrid">
-                <div class="mc" onclick="pickMode('Online',this)">
+                <div class="mc cb" onclick="pickMode('Online',this)">
                     <div class="mc-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                     </div>
                     <div class="mc-name">Online</div>
                     <div class="mc-desc">Work from anywhere</div>
                 </div>
-                <div class="mc" onclick="pickMode('Offline',this)">
+                <div class="mc cb" onclick="pickMode('Offline',this)">
                     <div class="mc-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
                     <div class="mc-name">Offline</div>
                     <div class="mc-desc">In-office presence</div>
                 </div>
-                <div class="mc" onclick="pickMode('Hybrid',this)">
+                <div class="mc cb" onclick="pickMode('Hybrid',this)">
                     <div class="mc-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/></svg>
                     </div>
@@ -460,7 +460,7 @@
         </div>
         <div class="nav-b">
             <button class="btn-ghost" onclick="goTo(1)">&larr; Back</button>
-            <button class="btn-bracket" onclick="goTo(3)">Continue &rarr;</button>
+            <button class="btn-bracket cb" onclick="goTo(3)">Continue &rarr;</button>
         </div>
     </div>
 
@@ -472,7 +472,7 @@
             <p>All plans include internship documentation &mdash; choose your level.</p>
         </div>
         <div class="pgrid">
-            <div class="pcard" id="plan-noob" onclick="pickPlan('noob')">
+            <div class="pcard cb" id="plan-noob" onclick="pickPlan('noob')">
                 <div class="plan-tier">// NOOB</div>
                 <div class="plan-price"><sup>&#8377;</sup>499</div>
                 <div class="plan-desc">Perfect for basic submission</div>
@@ -484,7 +484,7 @@
                     <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>PDF format (non-verifiable)</li>
                 </ul>
             </div>
-            <div class="pcard featured" id="plan-pro" onclick="pickPlan('pro')">
+            <div class="pcard featured cb" id="plan-pro" onclick="pickPlan('pro')">
                 <div class="plan-tier">// PRO</div>
                 <div class="plan-price"><sup>&#8377;</sup>999</div>
                 <div class="plan-desc">Best for students needing verified proof</div>
@@ -498,7 +498,7 @@
                     <li><span class="feat-chk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5"><path d="M2 5l2 2 4-4"/></svg></span>Professional email delivery</li>
                 </ul>
             </div>
-            <div class="pcard" id="plan-hacker" onclick="pickPlan('hacker')">
+            <div class="pcard cb" id="plan-hacker" onclick="pickPlan('hacker')">
                 <div class="plan-tier">// HACKER</div>
                 <div class="plan-price"><sup>&#8377;</sup>1599</div>
                 <div class="plan-desc">The complete internship documentation kit</div>
@@ -515,7 +515,7 @@
             </div>
         </div>
 
-        <div class="osb" id="osb">
+        <div class="osb cb" id="osb">
             <div class="osb-title">// Order Summary</div>
             <div class="or"><span class="ol">Applicant</span><span class="ov" id="oName">&mdash;</span></div>
             <div class="or"><span class="ol">Domain</span><span class="ov" id="oDomain">&mdash;</span></div>
@@ -532,7 +532,7 @@
         </label>
         <div class="em" id="e-consent" style="margin-bottom:12px;">Please accept the consent to proceed.</div>
 
-        <button class="pay-btn" id="payBtn" onclick="handlePay()" disabled>
+        <button class="pay-btn cb" id="payBtn" onclick="handlePay()" disabled>
             <svg id="payIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <span id="payLabel">Pay Securely with Razorpay</span>
         </button>
@@ -547,7 +547,7 @@
 
 <!-- CUSTOM DOMAIN DIALOG -->
 <div class="ov-bg" id="custOv">
-    <div class="dlg">
+    <div class="dlg cb">
         <span class="dlg-tag">// CUSTOM DOMAIN</span>
         <h3>Your Domain</h3>
         <p class="ds">Tell us about the domain you'd like to intern in &mdash; be as specific as you like.</p>
@@ -558,14 +558,14 @@
         </div>
         <div class="da">
             <button class="btn-ghost" onclick="closeCustom()">Cancel</button>
-            <button class="btn-bracket" onclick="confirmCustom()">Confirm</button>
+            <button class="btn-bracket cb" onclick="confirmCustom()">Confirm</button>
         </div>
     </div>
 </div>
 
 <!-- SUCCESS MODAL -->
 <div class="sov" id="sov">
-    <div class="sbox">
+    <div class="sbox cb">
         <div class="sico">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>
         </div>
