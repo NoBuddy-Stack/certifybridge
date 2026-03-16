@@ -1,0 +1,15 @@
+{
+  "name": "astra-forge-apply",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Astra Forge internship application portal",
+  "engines": {
+    "node": "20.x"
+  },
+  "type": "module",
+  "dependencies": {
+    "razorpay": "^2.9.2",
+    "mongodb": "^6.5.0",
+    "resend": "^3.2.0"
+  }
+}

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Internship — Astra Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- EmailJS removed — confirmation emails are now sent server-side via Resend -->
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #000000;
+            --bg-card: #ffffff08;
+            --bg-hover: #ffffff12;
+            --border: #ffffff1a;
+            --text: #ffffff;
+            --muted: #ffffffb3;
+            --dim: #ffffff55;
+            --green: #00ff1e;
+            --red: #ff2d2d;
+            --font: 'Inter', sans-serif;
+            --r: 8px;
+            --rl: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 64px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; z-index: 100;
+        }
+        .nav-logo {
+            font-size: 18px; font-weight: 700; color: var(--text);
+            text-decoration: none; display: flex; align-items: center; gap: 8px;
+        }
+        .nav-dot {
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%; box-shadow: 0 0 10px var(--green);
+        }
+        .nav-tag { font-size: 12px; color: var(--dim); }
+
+        /* ─── LAYOUT ─── */
+        main { padding-top: 64px; }
+        .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 80px; }
+
+        /* ─── HEADER ─── */
+        .hdr { text-align: center; margin-bottom: 48px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,255,30,0.07); border: 1px solid rgba(0,255,30,0.2);
+            color: var(--green); font-size: 11px; font-weight: 600;
+            padding: 5px 14px; border-radius: 100px; margin-bottom: 20px;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .hdr h1 {
+            font-size: 44px; font-weight: 900; line-height: 1.05;
+            margin-bottom: 14px; letter-spacing: -1.5px;
+        }
+        .hdr h1 .ac { color: var(--green); }
+        .hdr p { color: var(--muted); font-size: 16px; max-width: 460px; margin: 0 auto; }
+
+        /* ─── PROGRESS ─── */
+        .prog { margin-bottom: 48px; }
+        .steps { display: flex; align-items: center; justify-content: center; }
+        .step { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .sc {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--dim);
+            background: var(--bg); transition: all .3s; z-index: 2;
+        }
+        .step.active .sc { border-color: var(--green); color: var(--green); box-shadow: 0 0 20px rgba(0,255,30,.25); }
+        .step.done .sc   { border-color: var(--green); background: var(--green); color: #000; }
+        .sl {
+            font-size: 11px; font-weight: 500; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .6px; white-space: nowrap;
+        }
+        .step.active .sl { color: var(--green); }
+        .step.done .sl   { color: var(--muted); }
+        .conn {
+            width: 72px; height: 2px; background: var(--border);
+            margin: 0 6px 26px; transition: background .3s;
+        }
+        .conn.done { background: var(--green); }
+
+        /* ─── STEPS ─── */
+        .fs { display: none; animation: fu .25s ease; }
+        .fs.active { display: block; }
+        @keyframes fu { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+        .sec-t { font-size: 22px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 4px; }
+        .sec-s { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+        /* ─── FORM ─── */
+        .r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .fg { margin-bottom: 20px; }
+        .fg label {
+            display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+            margin-bottom: 8px; text-transform: uppercase; letter-spacing: .6px;
+        }
+        .req { color: var(--green); }
+        .opt { color: var(--dim); font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+        .fc {
+            width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); color: var(--text); font-family: var(--font);
+            font-size: 15px; padding: 12px 16px; outline: none; transition: all .2s;
+            -webkit-appearance: none; appearance: none;
+        }
+        .fc::placeholder { color: var(--dim); }
+        .fc:focus { border-color: var(--green); background: rgba(0,255,30,.04); box-shadow: 0 0 0 3px rgba(0,255,30,.1); }
+        .fc.err { border-color: var(--red); box-shadow: 0 0 0 3px rgba(255,45,45,.1); }
+        textarea.fc { resize: vertical; min-height: 108px; }
+        .em { font-size: 12px; color: var(--red); margin-top: 5px; display: none; }
+        .em.show { display: block; }
+
+        /* ─── PRIVACY BOX ─── */
+        .priv {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: rgba(0,255,30,.05); border: 1px solid rgba(0,255,30,.15);
+            border-radius: var(--r); padding: 12px 14px; margin-top: 10px;
+        }
+        .priv .pi { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+        .priv p { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+        .priv p strong { color: var(--green); font-weight: 600; }
+
+        /* ─── DATES ─── */
+        .dg { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+        .dur {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 100px;
+            font-size: 13px; font-weight: 500; margin-top: 8px; transition: all .2s;
+        }
+        .dur.ok  { background: rgba(0,255,30,.08); border: 1px solid rgba(0,255,30,.25); color: var(--green); }
+        .dur.bad { background: rgba(255,45,45,.08); border: 1px solid rgba(255,45,45,.25); color: var(--red); }
+        .dur.hi  { display: none; }
+
+        /* ─── DOMAIN GRID ─── */
+        .dgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 6px; }
+        .dc {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 11px 12px; cursor: pointer;
+            transition: all .2s; display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 500; color: var(--muted); user-select: none;
+        }
+        .dc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); color: var(--text); }
+        .dc.sel   { background: rgba(0,255,30,.06); border-color: var(--green); color: var(--green); }
+        .dc.cust  { border-style: dashed; color: var(--dim); justify-content: center; font-style: italic; }
+        .dc.cust.sel { border-style: solid; }
+        .di { font-size: 15px; flex-shrink: 0; }
+
+        /* ─── MODE ─── */
+        .mgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 12px; }
+        .mc {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 18px 12px; cursor: pointer;
+            transition: all .2s; text-align: center; user-select: none;
+        }
+        .mc:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); }
+        .mc.sel   { background: rgba(0,255,30,.06); border-color: var(--green); }
+        .mi { font-size: 26px; margin-bottom: 8px; }
+        .mn { font-size: 14px; font-weight: 700; }
+        .md { font-size: 11px; color: var(--dim); margin-top: 2px; }
+        .mc.sel .mn { color: var(--green); }
+
+        /* ─── LOCATION ─── */
+        .loc {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 16px; margin-bottom: 20px; display: none;
+        }
+        .loc.show { display: block; }
+        .loc .ll {
+            font-size: 12px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .6px;
+            margin-bottom: 12px; display: block;
+        }
+        .cw { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cc {
+            background: rgba(255,255,255,.05); border: 1px solid var(--border);
+            border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 500;
+            color: var(--muted); cursor: pointer; transition: all .2s; user-select: none;
+        }
+        .cc:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+        .cc.sel   { background: rgba(0,255,30,.08); border-color: var(--green); color: var(--green); }
+
+        /* ─── STIPEND ─── */
+        .sgrid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 20px; }
+        .sch {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 10px 6px; text-align: center;
+            font-size: 12px; font-weight: 600; color: var(--muted);
+            cursor: pointer; transition: all .2s; user-select: none;
+        }
+        .sch:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.17); color: var(--text); }
+        .sch.sel   { background: rgba(0,255,30,.06); border-color: var(--green); color: var(--green); }
+
+        /* ─── BUTTONS ─── */
+        .nav-b {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);
+        }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; padding: 12px 28px; border-radius: var(--r);
+            font-family: var(--font); font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all .2s; border: none; outline: none;
+        }
+        .btn-p  { background: var(--green); color: #000; }
+        .btn-p:hover { background: #00e81a; box-shadow: 0 0 28px rgba(0,255,30,.35); transform: translateY(-1px); }
+        .btn-g  { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-g:hover { border-color: rgba(255,255,255,.3); color: var(--text); }
+
+        /* ─── PLAN CARDS ─── */
+        .ph { text-align: center; margin-bottom: 32px; }
+        .ph h2 { font-size: 30px; font-weight: 900; letter-spacing: -.8px; margin-bottom: 8px; }
+        .ph p  { color: var(--muted); font-size: 15px; }
+
+        .pgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+        .pcard {
+            background: var(--bg-card); border: 2px solid var(--border);
+            border-radius: var(--rl); padding: 24px 20px; cursor: pointer;
+            transition: all .25s; position: relative; overflow: hidden; user-select: none;
+        }
+        .pcard::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: transparent; transition: background .3s;
+        }
+        .pcard:hover { background: var(--bg-hover); border-color: rgba(255,255,255,.2); transform: translateY(-3px); }
+        .pcard.sel {
+            border-color: var(--green); background: rgba(0,255,30,.05);
+            box-shadow: 0 0 48px rgba(0,255,30,.1), 0 8px 32px rgba(0,0,0,.5);
+            transform: translateY(-3px);
+        }
+        .pcard.sel::after { background: var(--green); }
+        .pop {
+            display: inline-block; background: var(--green); color: #000;
+            font-size: 10px; font-weight: 700; padding: 3px 8px;
+            border-radius: 100px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+        }
+        .pn  { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
+        .pcard.sel .pn { color: var(--green); }
+        .pp  { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; margin: 12px 0; }
+        .pp sup { font-size: 18px; vertical-align: top; margin-top: 7px; display: inline-block; font-weight: 700; }
+        .pdiv { height: 1px; background: var(--border); margin: 16px 0; }
+        .pf   { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .pf li {
+            display: flex; align-items: flex-start; gap: 8px;
+            font-size: 13px; color: var(--muted); line-height: 1.4;
+        }
+        .ck { color: var(--green); flex-shrink: 0; font-size: 13px; margin-top: 1px; }
+        .pcard.sel .pf li { color: var(--text); }
+
+        /* ─── ORDER SUMMARY ─── */
+        .osb {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 20px; margin-bottom: 20px; display: none;
+        }
+        .osb h4 {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .8px; color: var(--dim); margin-bottom: 14px;
+        }
+        .or {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 9px 0; font-size: 14px; border-bottom: 1px solid var(--border);
+        }
+        .or:last-child { border-bottom: none; }
+        .ol { color: var(--muted); }
+        .ov { font-weight: 600; }
+        .ov.g { color: var(--green); font-size: 16px; }
+
+        /* ─── PAY BTN ─── */
+        .paybtn {
+            width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+            background: var(--green); color: #000; border: none;
+            border-radius: var(--r); cursor: pointer; font-family: var(--font);
+            transition: all .2s; display: flex; align-items: center;
+            justify-content: center; gap: 10px;
+        }
+        .paybtn:hover { background: #00e81a; box-shadow: 0 0 40px rgba(0,255,30,.45); transform: translateY(-1px); }
+        .paybtn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+        .pay-note { text-align: center; font-size: 12px; color: var(--dim); margin-top: 10px; }
+        .perr { font-size: 13px; color: var(--red); margin-bottom: 12px; display: none; }
+        .perr.show { display: block; }
+        .consent-label {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px; color: var(--muted); line-height: 1.5;
+            margin-bottom: 12px; cursor: pointer;
+        }
+        .consent-label input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--green); }
+
+        /* ─── DIALOG ─── */
+        .ov-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,.75);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 200; display: flex; align-items: center; justify-content: center;
+            padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s;
+        }
+        .ov-bg.open { opacity: 1; pointer-events: all; }
+        .dlg {
+            background: #0e0e0e; border: 1px solid rgba(255,255,255,.12);
+            border-radius: var(--rl); padding: 32px; width: 100%; max-width: 460px;
+            transform: scale(.94) translateY(10px); transition: transform .22s;
+        }
+        .ov-bg.open .dlg { transform: scale(1) translateY(0); }
+        .dlg h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+        .dlg .ds { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+        .da { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        /* ─── SUCCESS ─── */
+        .sov {
+            position: fixed; inset: 0; background: rgba(0,0,0,.92);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            z-index: 300; display: flex; align-items: center; justify-content: center;
+            padding: 24px; opacity: 0; pointer-events: none; transition: opacity .3s;
+        }
+        .sov.open { opacity: 1; pointer-events: all; }
+        .sbox {
+            background: #080808; border: 1px solid rgba(0,255,30,.25);
+            border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 520px;
+            text-align: center; box-shadow: 0 0 80px rgba(0,255,30,.08);
+            transform: scale(.88); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .sov.open .sbox { transform: scale(1); }
+        .sico {
+            width: 72px; height: 72px; background: rgba(0,255,30,.12);
+            border: 2px solid var(--green); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; margin: 0 auto 24px; box-shadow: 0 0 30px rgba(0,255,30,.25);
+        }
+        .sbox h2 { font-size: 26px; font-weight: 900; margin-bottom: 14px; letter-spacing: -.5px; }
+        .sbody { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 8px; }
+        .sbody strong { color: var(--green); font-weight: 600; }
+        .crow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+        .cch {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 100px; padding: 8px 18px; font-size: 13px; font-weight: 500;
+            color: var(--muted); text-decoration: none; transition: all .2s;
+        }
+        .cch:hover { border-color: var(--green); color: var(--green); }
+
+        /* ─── SELECT ARROW ─── */
+        select.fc {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff44' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 14px center;
+            padding-right: 36px; cursor: pointer;
+        }
+        select.fc option { background: #111; color: #fff; }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 640px) {
+            nav { padding: 0 20px; }
+            .wrap { padding: 36px 16px 60px; }
+            .hdr h1 { font-size: 30px; }
+            .r2, .dg { grid-template-columns: 1fr; }
+            .dgrid { grid-template-columns: repeat(2,1fr); }
+            .mgrid { grid-template-columns: 1fr; }
+            .sgrid { grid-template-columns: repeat(3,1fr); }
+            .pgrid { grid-template-columns: 1fr; }
+            .sbox  { padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-logo"><span class="nav-dot"></span>Astra Forge</a>
+    <span class="nav-tag">Internship Application</span>
+</nav>
+
+<main><div class="wrap">
+
+    <!-- HEADER -->
+    <div class="hdr">
+        <div class="badge">✦ Apply Now</div>
+        <h1>Start Your <span class="ac">Internship</span><br>Journey With Us</h1>
+        <p>Fill in your details and we'll connect you with the perfect internship opportunity — fast.</p>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="prog">
+        <div class="steps">
+            <div class="step active" id="si1"><div class="sc" id="sc1">1</div><div class="sl">Personal Info</div></div>
+            <div class="conn" id="cn1"></div>
+            <div class="step" id="si2"><div class="sc" id="sc2">2</div><div class="sl">Preferences</div></div>
+            <div class="conn" id="cn2"></div>
+            <div class="step" id="si3"><div class="sc" id="sc3">3</div><div class="sl">Choose Plan</div></div>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 1 ═══ -->
+    <div class="fs active" id="step-1">
+        <div class="sec-t">Personal Details</div>
+        <div class="sec-s">Let's start with the basics — tell us a little about yourself.</div>
+
+        <div class="r2">
+            <div class="fg">
+                <label>First Name <span class="req">*</span></label>
+                <input type="text" class="fc" id="firstName" placeholder="e.g. Arjun" autocomplete="given-name">
+                <div class="em" id="e-firstName">Please enter your first name.</div>
+            </div>
+            <div class="fg">
+                <label>Last Name <span class="req">*</span></label>
+                <input type="text" class="fc" id="lastName" placeholder="e.g. Sharma" autocomplete="family-name">
+                <div class="em" id="e-lastName">Please enter your last name.</div>
+            </div>
+        </div>
+
+        <div class="fg">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" class="fc" id="email" placeholder="you@example.com" autocomplete="email">
+            <div class="em" id="e-email">Please enter a valid email address.</div>
+        </div>
+
+        <div class="fg">
+            <label>Phone Number <span class="req">*</span></label>
+            <input type="tel" class="fc" id="phone" placeholder="+91 98765 43210" autocomplete="tel">
+            <div class="em" id="e-phone">Please enter a valid 10-digit phone number.</div>
+        </div>
+
+        <div class="fg">
+            <label>College / University <span class="req">*</span></label>
+            <input type="text" class="fc" id="college" placeholder="e.g. Rajasthan Technical University" autocomplete="organization">
+            <div class="em" id="e-college">Please enter your college name.</div>
+            <div class="priv">
+                <span class="pi">🔒</span>
+                <p>Hey! Just so you know — <strong>your college details are 100% private and secure.</strong> We store them safely and will <strong>never</strong> share them with your college, any organization, or any third party. This info is only used to understand your background better. You have our word! 🤝</p>
+            </div>
+        </div>
+
+        <div class="nav-b">
+            <div></div>
+            <button class="btn btn-p" onclick="goTo(2)">Continue &rarr;</button>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 2 ═══ -->
+    <div class="fs" id="step-2">
+        <div class="sec-t">Internship Preferences</div>
+        <div class="sec-s">Tell us what kind of internship you're looking for.</div>
+
+        <!-- Dates -->
+        <div class="fg">
+            <label>Internship Duration <span class="req">*</span></label>
+            <div class="dg">
+                <div>
+                    <input type="date" class="fc" id="startDate" onchange="calcDur()">
+                    <div class="em" id="e-startDate">Please select a start date.</div>
+                </div>
+                <div>
+                    <input type="date" class="fc" id="endDate" onchange="calcDur()">
+                    <div class="em" id="e-endDate">Please select an end date.</div>
+                </div>
+            </div>
+            <div class="dur hi" id="durPill"><span>&#9201;</span> <span id="durTxt"></span></div>
+        </div>
+
+        <!-- Domain -->
+        <div class="fg">
+            <label>Internship Domain <span class="req">*</span></label>
+            <div class="dgrid">
+                <div class="dc" onclick="pickDomain('Web Development',this)"><span class="di">🌐</span>Web Development</div>
+                <div class="dc" onclick="pickDomain('App Development',this)"><span class="di">📱</span>App Development</div>
+                <div class="dc" onclick="pickDomain('Software Development',this)"><span class="di">💻</span>Software Development</div>
+                <div class="dc" onclick="pickDomain('Graphic Designer',this)"><span class="di">🎨</span>Graphic Designer</div>
+                <div class="dc" onclick="pickDomain('AI Automation Engineer',this)"><span class="di">🤖</span>AI Automation Engineer</div>
+                <div class="dc" onclick="pickDomain('AI Programmer',this)"><span class="di">🧠</span>AI Programmer</div>
+                <div class="dc" onclick="pickDomain('Data Science & AI',this)"><span class="di">📊</span>Data Science &amp; AI</div>
+                <div class="dc" onclick="pickDomain('Digital Marketing',this)"><span class="di">📣</span>Digital Marketing</div>
+                <div class="dc" onclick="pickDomain('UI/UX Design',this)"><span class="di">✏️</span>UI/UX Design</div>
+                <div class="dc" onclick="pickDomain('DevOps Engineer',this)"><span class="di">⚙️</span>DevOps Engineer</div>
+                <div class="dc" onclick="pickDomain('Program Management',this)"><span class="di">📋</span>Program Management</div>
+                <div class="dc" onclick="pickDomain('Project Management',this)"><span class="di">🗂️</span>Project Management</div>
+                <div class="dc" onclick="pickDomain('Cyber Security',this)"><span class="di">🔐</span>Cyber Security</div>
+                <div class="dc" onclick="pickDomain('Cloud Computing',this)"><span class="di">☁️</span>Cloud Computing</div>
+                <div class="dc cust" id="custCard" onclick="openCustom()"><span class="di">✦</span>&nbsp;Custom</div>
+            </div>
+            <div class="em" id="e-domain">Please select a domain.</div>
+        </div>
+
+        <!-- Mode -->
+        <div class="fg">
+            <label>Preferred Mode <span class="req">*</span></label>
+            <div class="mgrid">
+                <div class="mc" onclick="pickMode('Online',this)">
+                    <div class="mi">💻</div><div class="mn">Online</div><div class="md">Work from anywhere</div>
+                </div>
+                <div class="mc" onclick="pickMode('Offline',this)">
+                    <div class="mi">🏢</div><div class="mn">Offline</div><div class="md">In-office presence</div>
+                </div>
+                <div class="mc" onclick="pickMode('Hybrid',this)">
+                    <div class="mi">🔄</div><div class="mn">Hybrid</div><div class="md">Mix of both</div>
+                </div>
+            </div>
+            <div class="em" id="e-mode">Please select a preferred mode.</div>
+
+            <div class="loc" id="locBox">
+                <span class="ll">Preferred City <span class="req">*</span></span>
+                <div class="cw">
+                    <div class="cc" onclick="pickCity('Jaipur',this)">Jaipur</div>
+                    <div class="cc" onclick="pickCity('Delhi',this)">Delhi</div>
+                    <div class="cc" onclick="pickCity('Mumbai',this)">Mumbai</div>
+                    <div class="cc" onclick="pickCity('Hyderabad',this)">Hyderabad</div>
+                    <div class="cc" onclick="pickCity('Ahmedabad',this)">Ahmedabad</div>
+                    <div class="cc" onclick="pickCity('Pune',this)">Pune</div>
+                    <div class="cc" onclick="pickCity('Bangalore',this)">Bangalore</div>
+                </div>
+                <div class="em" id="e-city" style="margin-top:8px;">Please select a preferred city.</div>
+            </div>
+        </div>
+
+        <!-- Stipend -->
+        <div class="fg">
+            <label>Expected Stipend Range <span class="req">*</span></label>
+            <div class="sgrid">
+                <div class="sch" onclick="pickStip('&lt; &#8377;10k',this)">&lt; &#8377;10k</div>
+                <div class="sch" onclick="pickStip('&#8377;10k&#8211;20k',this)">&#8377;10&#8211;20k</div>
+                <div class="sch" onclick="pickStip('&#8377;20k&#8211;30k',this)">&#8377;20&#8211;30k</div>
+                <div class="sch" onclick="pickStip('&#8377;30k&#8211;40k',this)">&#8377;30&#8211;40k</div>
+                <div class="sch" onclick="pickStip('&#8377;40k&#8211;50k',this)">&#8377;40&#8211;50k</div>
+            </div>
+            <div class="em" id="e-stip">Please select a stipend range.</div>
+        </div>
+
+        <!-- Note -->
+        <div class="fg">
+            <label>Additional Note <span class="opt">(Optional)</span></label>
+            <textarea class="fc" id="note" placeholder="Share any additional context — college requirements, specific preferences, or anything you'd like us to know. The more you share, the better we can match you! 💬"></textarea>
+        </div>
+
+        <div class="nav-b">
+            <button class="btn btn-g" onclick="goTo(1)">&larr; Back</button>
+            <button class="btn btn-p" onclick="goTo(3)">Continue &rarr;</button>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 3 ═══ -->
+    <div class="fs" id="step-3">
+
+        <div class="ph">
+            <h2>Choose Your <span style="color:var(--green)">Plan</span></h2>
+            <p>Pick the plan that fits your goals. All plans include verified internship matching.</p>
+        </div>
+
+        <div class="pgrid">
+            <!-- NEW -->
+            <div class="pcard" id="plan-new" onclick="pickPlan('new',999)">
+                <div class="pn">New</div>
+                <div class="pp"><sup>&#8377;</sup>999</div>
+                <div class="pdiv"></div>
+                <ul class="pf">
+                    <li><span class="ck">&#10003;</span> 1 Domain Match</li>
+                    <li><span class="ck">&#10003;</span> Basic Resources Pack</li>
+                    <li><span class="ck">&#10003;</span> Email Support</li>
+                    <li><span class="ck">&#10003;</span> Offer Letter Template</li>
+                </ul>
+            </div>
+            <!-- PRO -->
+            <div class="pcard" id="plan-pro" onclick="pickPlan('pro',1999)">
+                <div class="pop">Most Popular</div>
+                <div class="pn">Pro</div>
+                <div class="pp"><sup>&#8377;</sup>1,999</div>
+                <div class="pdiv"></div>
+                <ul class="pf">
+                    <li><span class="ck">&#10003;</span> 3 Domain Matches</li>
+                    <li><span class="ck">&#10003;</span> Full Resource Bundle</li>
+                    <li><span class="ck">&#10003;</span> Priority Email Support</li>
+                    <li><span class="ck">&#10003;</span> LinkedIn Profile Review</li>
+                    <li><span class="ck">&#10003;</span> Resume &amp; Cover Letter</li>
+                </ul>
+            </div>
+            <!-- HACKER -->
+            <div class="pcard" id="plan-hacker" onclick="pickPlan('hacker',4999)">
+                <div class="pn">Hacker</div>
+                <div class="pp"><sup>&#8377;</sup>4,999</div>
+                <div class="pdiv"></div>
+                <ul class="pf">
+                    <li><span class="ck">&#10003;</span> Unlimited Matches</li>
+                    <li><span class="ck">&#10003;</span> Premium Resource Bundle</li>
+                    <li><span class="ck">&#10003;</span> WhatsApp Priority Support</li>
+                    <li><span class="ck">&#10003;</span> 1-on-1 Career Mentoring</li>
+                    <li><span class="ck">&#10003;</span> Resume + Portfolio Review</li>
+                    <li><span class="ck">&#10003;</span> Interview Prep Sessions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="osb" id="osb">
+            <h4>Order Summary</h4>
+            <div class="or"><span class="ol">Applicant</span><span class="ov" id="oName">—</span></div>
+            <div class="or"><span class="ol">Domain</span><span class="ov" id="oDomain">—</span></div>
+            <div class="or"><span class="ol">Mode</span><span class="ov" id="oMode">—</span></div>
+            <div class="or"><span class="ol">Duration</span><span class="ov" id="oDur">—</span></div>
+            <div class="or"><span class="ol">Plan</span><span class="ov" id="oPlan">—</span></div>
+            <div class="or"><span class="ol">Total</span><span class="ov g" id="oTotal">—</span></div>
+        </div>
+
+        <div class="perr" id="perr">Please select a plan before proceeding.</div>
+
+        <!-- DPDPA 2023 consent -->
+        <label class="consent-label" id="consentLabel">
+            <input type="checkbox" id="consentChk" onchange="togglePayBtn()">
+            <span>I consent to Astra Forge collecting and processing my personal data (name, email, phone) for the purpose of internship matching, as described in our <a href="mailto:contact@astraforge.com" style="color:var(--green);">Privacy Policy</a>.</span>
+        </label>
+        <div class="em" id="e-consent" style="margin-bottom:8px;">Please accept the consent to proceed.</div>
+
+        <button class="paybtn" id="payBtn" onclick="handlePay()" disabled>
+            &#128274;&nbsp; Pay Securely with Razorpay
+        </button>
+        <p class="pay-note">Secured by Razorpay &middot; 256-bit SSL &middot; Instant confirmation</p>
+
+        <div class="nav-b">
+            <button class="btn btn-g" onclick="goTo(2)">&larr; Back</button>
+            <div></div>
+        </div>
+    </div>
+
+</div></main>
+
+<!-- CUSTOM DOMAIN DIALOG -->
+<div class="ov-bg" id="custOv">
+    <div class="dlg">
+        <h3>Custom Domain</h3>
+        <p class="ds">Tell us about the domain you'd like to intern in — be as specific as you like!</p>
+        <div class="fg">
+            <label>Your Domain <span class="req">*</span></label>
+            <input type="text" class="fc" id="custIn" placeholder="e.g. Blockchain, AR/VR, Quantum Computing…">
+            <div class="em" id="e-custIn">Please describe your domain.</div>
+        </div>
+        <div class="da">
+            <button class="btn btn-g" onclick="closeCustom()">Cancel</button>
+            <button class="btn btn-p" onclick="confirmCustom()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="sov" id="sov">
+    <div class="sbox">
+        <div class="sico">&#10003;</div>
+        <h2>We've Got You! &#127881;</h2>
+        <p class="sbody">
+            Thank you, <strong id="sName">there</strong>!
+            Your internship requirement has been successfully registered.<br><br>
+            We'll review your details and share all resources as per your
+            <strong id="sPlan">plan</strong> within <strong>24 hours</strong>.
+            A confirmation has been sent to <strong id="sEmail">your email</strong>.
+        </p>
+        <p style="font-size:13px;color:var(--dim);margin-top:16px;">Need anything in the meantime? We're here:</p>
+        <div class="crow">
+            <a id="emailLink" href="#" class="cch">&#9993;&#65039; Email Us</a>
+            <a id="waLink" href="#" target="_blank" class="cch">&#128172; WhatsApp</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — only public values here
+// Amount and emails are handled server-side
+// ═══════════════════════════════════════════
+var CFG = {
+    RAZORPAY_KEY: '',  // loaded from /api/config at startup — no hardcoded placeholder
+    COMPANY:      'Astra Forge',
+    EMAIL:        'contact@astraforge.com',
+    WA:           '919999999999',
+};
+
+// Load public Razorpay Key ID from server so it's always correct across environments
+(async function loadConfig(){
+    try {
+        var r = await fetch('/api/config');
+        if(r.ok){ var d = await r.json(); CFG.RAZORPAY_KEY = d.razorpayKeyId || ''; }
+    } catch(e){ console.warn('Could not load /api/config:', e); }
+})();
+
+var PLAN_NAMES = { new:'New Plan', pro:'Pro Plan', hacker:'Hacker Plan' };
+
+// ─── state ───
+var cur=1, dom='', mode='', city='', stip='', plan='', serverAmt=0;
+
+// ─── helpers ───
+function gv(id){ return document.getElementById(id).value.trim(); }
+
+function setErr(id,msg){
+    var e=document.getElementById('e-'+id);
+    if(e){ if(msg)e.textContent=msg; e.classList.add('show'); }
+    var f=document.getElementById(id);
+    if(f)f.classList.add('err');
+}
+function clrErr(id){
+    var e=document.getElementById('e-'+id);
+    if(e)e.classList.remove('show');
+    var f=document.getElementById(id);
+    if(f)f.classList.remove('err');
+}
+
+// ─── navigation ───
+function goTo(n){
+    if(n>cur && !validate(cur)) return;
+    document.getElementById('step-'+cur).classList.remove('active');
+    document.getElementById('step-'+n).classList.add('active');
+    for(var i=1;i<=3;i++){
+        var si=document.getElementById('si'+i), sc=document.getElementById('sc'+i);
+        si.classList.remove('active','done');
+        if(i<n){ si.classList.add('done'); sc.textContent='\u2713'; }
+        else if(i===n){ si.classList.add('active'); sc.textContent=i; }
+        else{ sc.textContent=i; }
+    }
+    for(var j=1;j<=2;j++)
+        document.getElementById('cn'+j).classList.toggle('done',j<n);
+    cur=n;
+    window.scrollTo({top:0,behavior:'smooth'});
+    if(n===3) refreshSum();
+}
+
+// ─── validation ───
+function validate(step){
+    var ok=true;
+    if(step===1){
+        gv('firstName')? clrErr('firstName'):(setErr('firstName'),ok=false);
+        gv('lastName')?  clrErr('lastName') :(setErr('lastName'), ok=false);
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gv('email'))? clrErr('email'):(setErr('email'),ok=false);
+        /^[6-9]\d{9}$/.test(gv('phone').replace(/[\s\-\+]/g,'').replace(/^91/,''))? clrErr('phone'):(setErr('phone'),ok=false);
+        gv('college')? clrErr('college'):(setErr('college'),ok=false);
+    }
+    if(step===2){
+        var sd=gv('startDate'), ed=gv('endDate');
+        sd? clrErr('startDate'):(setErr('startDate'),ok=false);
+        ed? clrErr('endDate')  :(setErr('endDate'),  ok=false);
+        if(sd && ed){
+            var mo=(new Date(ed)-new Date(sd))/2592e6;
+            if(new Date(ed)<=new Date(sd)){ setErr('endDate','End date must be after start date.'); ok=false; }
+            else if(mo<1){ setErr('endDate','Minimum duration is 1 month.'); ok=false; }
+            else if(mo>12){ setErr('endDate','Maximum duration is 1 year.'); ok=false; }
+            else clrErr('endDate');
+        }
+        dom?  clrErr('domain'):(setErr('domain'),ok=false);
+        mode? clrErr('mode')  :(setErr('mode'),  ok=false);
+        if((mode==='Offline'||mode==='Hybrid')&&!city){ setErr('city'); ok=false; } else clrErr('city');
+        stip? clrErr('stip')  :(setErr('stip'),  ok=false);
+    }
+    return ok;
+}
+
+// ─── duration calculator ───
+function calcDur(){
+    var sd=gv('startDate'), ed=gv('endDate'), pill=document.getElementById('durPill'), txt=document.getElementById('durTxt');
+    if(!sd||!ed){ pill.className='dur hi'; return; }
+    var days=Math.round((new Date(ed)-new Date(sd))/864e5), mo=days/30;
+    pill.className='dur';
+    if(new Date(ed)<=new Date(sd)){ pill.classList.add('bad'); txt.textContent='End date must be after start date'; return; }
+    if(mo<1){ pill.classList.add('bad'); txt.textContent='Minimum duration is 1 month'; return; }
+    if(mo>12){ pill.classList.add('bad'); txt.textContent='Maximum duration is 1 year'; return; }
+    pill.classList.add('ok');
+    var m=Math.floor(days/30), d=days%30, s='';
+    if(m>0) s+=m+' month'+(m>1?'s':'');
+    if(d>0) s+=(m>0?' ':'')+d+' day'+(d>1?'s':'');
+    txt.textContent='Duration: '+s;
+}
+
+// ─── domain ───
+function pickDomain(name,el){
+    document.querySelectorAll('.dc').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel'); dom=name; clrErr('domain');
+}
+function openCustom(){
+    document.getElementById('custOv').classList.add('open');
+    setTimeout(function(){document.getElementById('custIn').focus();},200);
+}
+function closeCustom(){ document.getElementById('custOv').classList.remove('open'); }
+function confirmCustom(){
+    var val=document.getElementById('custIn').value.trim();
+    if(!val){ document.getElementById('e-custIn').classList.add('show'); return; }
+    document.getElementById('e-custIn').classList.remove('show');
+    document.querySelectorAll('.dc').forEach(function(c){c.classList.remove('sel');});
+    var card=document.getElementById('custCard');
+    // Safe DOM update — no innerHTML with user content
+    while(card.firstChild) card.removeChild(card.firstChild);
+    var ico=document.createElement('span'); ico.className='di'; ico.textContent='✦';
+    card.appendChild(ico);
+    card.appendChild(document.createTextNode('\u00a0'+val));
+    card.classList.add('sel');
+    dom=val; clrErr('domain'); closeCustom();
+}
+
+// ─── mode ───
+function pickMode(m,el){
+    document.querySelectorAll('.mc').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel'); mode=m; clrErr('mode');
+    var lb=document.getElementById('locBox');
+    if(m==='Offline'||m==='Hybrid'){ lb.classList.add('show'); }
+    else{
+        lb.classList.remove('show'); city='';
+        document.querySelectorAll('.cc').forEach(function(c){c.classList.remove('sel');});
+    }
+}
+
+// ─── city ───
+function pickCity(c,el){
+    document.querySelectorAll('.cc').forEach(function(x){x.classList.remove('sel');});
+    el.classList.add('sel'); city=c; clrErr('city');
+}
+
+// ─── stipend ───
+function pickStip(r,el){
+    document.querySelectorAll('.sch').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel'); stip=r; clrErr('stip');
+}
+
+// ─── plan ───
+// Note: 'a' (display amount) is kept for UI only — real amount is locked server-side
+function pickPlan(p,a){
+    document.querySelectorAll('.pcard').forEach(function(c){c.classList.remove('sel');});
+    document.getElementById('plan-'+p).classList.add('sel');
+    plan=p; serverAmt=a;  // display value only, not trusted for payment
+    document.getElementById('perr').classList.remove('show');
+    document.getElementById('osb').style.display='block';
+    refreshSum();
+    togglePayBtn();
+}
+
+// ─── consent + pay button ───
+function togglePayBtn(){
+    var checked = document.getElementById('consentChk').checked;
+    document.getElementById('payBtn').disabled = !checked;
+    if(checked) document.getElementById('e-consent').classList.remove('show');
+}
+
+function refreshSum(){
+    document.getElementById('oName').textContent   = (gv('firstName')+' '+gv('lastName')).trim()||'—';
+    document.getElementById('oDomain').textContent = dom||'—';
+    document.getElementById('oMode').textContent   = mode+(city?' \u00b7 '+city:'')||'—';
+    document.getElementById('oDur').textContent    = document.getElementById('durTxt').textContent.replace('Duration: ','')||'—';
+    document.getElementById('oPlan').textContent   = plan?PLAN_NAMES[plan]:'—';
+    document.getElementById('oTotal').textContent  = plan?'\u20b9'+serverAmt.toLocaleString('en-IN'):'—';
+}
+
+// ─── payment (secure 2-step flow) ───────────────────────────────────────────
+//
+// Step 1: POST /api/create-order  → amount locked server-side → get order_id
+// Step 2: Razorpay modal opens with order_id (not a client-supplied amount)
+// Step 3: POST /api/verify-payment → HMAC check + MongoDB save + Resend email
+//
+async function handlePay(){
+    if(!plan){ document.getElementById('perr').classList.add('show'); return; }
+    if(!document.getElementById('consentChk').checked){
+        document.getElementById('e-consent').classList.add('show'); return;
+    }
+
+    var btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating order\u2026';
+
+    // ── Step 1: Create order server-side ────────────────────────────────────
+    var orderRes;
+    try {
+        orderRes = await fetch('/api/create-order', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ plan: plan }),
+        });
+    } catch(netErr) {
+        alert('Network error. Please check your connection and try again.');
+        resetPayBtn(btn); return;
+    }
+
+    if(!orderRes.ok){
+        var errBody = {};
+        try { errBody = await orderRes.json(); } catch(_){}
+        alert('Could not create order: ' + (errBody.error || 'Unknown error') + '. Please try again.');
+        resetPayBtn(btn); return;
+    }
+
+    var orderData = await orderRes.json();
+    serverAmt = orderData.amount; // store for display in summary
+    refreshSum();
+
+    btn.textContent = 'Opening payment\u2026';
+
+    // ── Step 2: Open Razorpay with server-issued order_id ───────────────────
+    var opts = {
+        key:         CFG.RAZORPAY_KEY,      // public key only — secret never in browser
+        order_id:    orderData.orderId,     // from server — amount is locked inside this
+        amount:      orderData.amount * 100,// paise — from server, display only
+        currency:    'INR',
+        name:        CFG.COMPANY,
+        description: 'Internship Application \u2014 ' + PLAN_NAMES[plan],
+        prefill: {
+            name:    gv('firstName') + ' ' + gv('lastName'),
+            email:   gv('email'),
+            contact: gv('phone'),
+        },
+        theme: { color: '#00ff1e' },
+        handler: function(rzpResp) {
+            // ── Step 3: Verify payment server-side ──────────────────────────
+            verifyPayment(rzpResp, btn);
+        },
+        modal: {
+            ondismiss: function() { resetPayBtn(btn); }
+        }
+    };
+
+    new Razorpay(opts).open();
+}
+
+// ─── verify payment server-side ─────────────────────────────────────────────
+async function verifyPayment(rzpResp, btn){
+    btn.disabled = true;
+    btn.textContent = 'Verifying payment\u2026';
+
+    var payload = {
+        razorpay_order_id:   rzpResp.razorpay_order_id,
+        razorpay_payment_id: rzpResp.razorpay_payment_id,
+        razorpay_signature:  rzpResp.razorpay_signature,
+        // Form data — sent once here, never sent client-side to email
+        firstName: gv('firstName'),
+        lastName:  gv('lastName'),
+        email:     gv('email'),
+        phone:     gv('phone'),
+        college:   gv('college'),
+        domain:    dom,
+        mode:      mode,
+        city:      city || '',
+        stipend:   stip,
+        startDate: gv('startDate'),
+        endDate:   gv('endDate'),
+        duration:  document.getElementById('durTxt').textContent.replace('Duration: ',''),
+        note:      gv('note') || '',
+        plan:      plan,
+        consent:   document.getElementById('consentChk').checked,
+    };
+
+    var verifyRes;
+    try {
+        verifyRes = await fetch('/api/verify-payment', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+    } catch(netErr) {
+        // Payment was captured by Razorpay but we couldn't verify.
+        // Show user their payment ID so they can contact support.
+        alert(
+            'Payment received but verification failed due to a network error.\n\n' +
+            'Please contact us with your Payment ID: ' + rzpResp.razorpay_payment_id + '\n' +
+            'Email: ' + CFG.EMAIL
+        );
+        resetPayBtn(btn); return;
+    }
+
+    if(!verifyRes.ok){
+        var errBody = {};
+        try { errBody = await verifyRes.json(); } catch(_){}
+        alert(errBody.error || ('Verification failed. Please contact support with Payment ID: ' + rzpResp.razorpay_payment_id));
+        resetPayBtn(btn); return;
+    }
+
+    // ── Payment verified — show success modal ────────────────────────────────
+    showSuccess(rzpResp);
+}
+
+// ─── show success modal ──────────────────────────────────────────────────────
+function showSuccess(rzpResp){
+    document.getElementById('sName').textContent   = gv('firstName');
+    document.getElementById('sPlan').textContent   = PLAN_NAMES[plan];
+    document.getElementById('sEmail').textContent  = gv('email');
+    document.getElementById('emailLink').href       = 'mailto:' + CFG.EMAIL;
+    document.getElementById('waLink').href          = 'https://wa.me/' + CFG.WA;
+    document.getElementById('sov').classList.add('open');
+}
+
+function resetPayBtn(btn){
+    btn.disabled    = false;
+    btn.textContent = '\uD83D\uDD12\u00A0 Pay Securely with Razorpay';
+}
+
+// ─── close dialog on overlay click ───
+document.getElementById('custOv').addEventListener('click',function(e){
+    if(e.target===this) closeCustom();
+});
+
+// ─── min date = today ───
+var today=new Date().toISOString().split('T')[0];
+document.getElementById('startDate').min=today;
+document.getElementById('endDate').min=today;
+</script>
+</body>
+</html>
