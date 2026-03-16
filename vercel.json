@@ -3,7 +3,8 @@
   "regions": ["bom1"],
   "outputDirectory": "public",
   "routes": [
-    { "src": "/apply", "dest": "/apply.html" }
+    { "src": "/apply", "dest": "/apply.html" },
+    { "src": "/admin", "dest": "/admin.html" }
   ],
   "functions": {
     "api/config.js":         { "maxDuration": 3  },
@@ -11,7 +12,10 @@
     "api/application.js":    { "maxDuration": 5  },
     "api/create-order.js":   { "maxDuration": 10 },
     "api/verify-payment.js": { "maxDuration": 10 },
-    "api/webhook.js":        { "maxDuration": 10 }
+    "api/webhook.js":              { "maxDuration": 10 },
+    "api/admin/applications.js":   { "maxDuration": 10 },
+    "api/admin/applications/[id].js": { "maxDuration": 10 },
+    "api/admin/export.js":         { "maxDuration": 15 }
   },
   "headers": [
     {
@@ -47,6 +51,19 @@
     },
     {
       "source": "/apply.html",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/admin.html",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }
   ]
