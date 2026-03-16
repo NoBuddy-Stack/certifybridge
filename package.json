@@ -1,8 +1,8 @@
 {
-  "name": "astra-forge-apply",
+  "name": "certifybridge-apply",
   "version": "1.0.0",
   "private": true,
-  "description": "Astra Forge internship application portal",
+  "description": "CertifyBridge internship application portal",
   "engines": {
     "node": "20.x"
   },

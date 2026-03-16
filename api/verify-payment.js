@@ -147,7 +147,7 @@ export default async function handler(req, res) {
   // ── 4. Save to MongoDB ────────────────────────────────────────────────────
   try {
     const client = await clientPromise;
-    const col    = client.db('astra_forge').collection('applications');
+    const col    = client.db('certifybridge').collection('applications');
 
     // ensureIndexes runs only once per cold start (module-level flag)
     await ensureIndexes(col);
@@ -223,8 +223,8 @@ async function sendConfirmationEmail(doc) {
 
   const modeDisplay  = city ? `${mode} · ${city}` : mode;
   const amountFmt    = `₹${amount.toLocaleString('en-IN')}`;
-  const companyName  = process.env.COMPANY_NAME  || 'Astra Forge';
-  const supportEmail = process.env.SUPPORT_EMAIL || 'contact@astraforge.com';
+  const companyName  = process.env.COMPANY_NAME  || 'CertifyBridge';
+  const supportEmail = process.env.SUPPORT_EMAIL || 'contact@certifybridge.com';
   const waNumber     = process.env.WHATSAPP_NUMBER || '';
 
   const { data, error } = await resend.emails.send({
@@ -268,7 +268,7 @@ async function sendConfirmationEmail(doc) {
           <td style="padding:32px 40px 24px;">
             <table cellpadding="0" cellspacing="0">
               <tr>
-                <td style="width:8px;height:8px;background:#00ff1e;border-radius:50%;box-shadow:0 0 8px #00ff1e;"></td>
+                <td style="width:8px;height:8px;background:#0000ee;border-radius:50%;box-shadow:0 0 8px #0000ee;"></td>
                 <td style="padding-left:8px;font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px;">${he(companyName)}</td>
               </tr>
             </table>
@@ -278,7 +278,7 @@ async function sendConfirmationEmail(doc) {
         <!-- Confirmed badge -->
         <tr>
           <td style="padding:0 40px 8px;">
-            <span style="background:#00ff1e;color:#000;font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;text-transform:uppercase;letter-spacing:1px;">
+            <span style="background:#0000ee;color:#000;font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;text-transform:uppercase;letter-spacing:1px;">
               ✓ &nbsp;Confirmed
             </span>
           </td>
@@ -299,7 +299,7 @@ async function sendConfirmationEmail(doc) {
             <p style="margin:0;font-size:15px;color:#ffffffb3;line-height:1.7;">
               Your internship application has been successfully registered and your
               payment is confirmed. Our team will review your details and share all
-              resources as per your <strong style="color:#00ff1e;">${he(planName)}</strong>
+              resources as per your <strong style="color:#0000ee;">${he(planName)}</strong>
               within <strong style="color:#fff;">24 hours</strong>.
             </p>
           </td>
@@ -336,7 +336,7 @@ async function sendConfirmationEmail(doc) {
               </tr>
               <tr>
                 <td style="padding:14px 16px;font-size:12px;color:#ffffff66;text-transform:uppercase;letter-spacing:.5px;">Amount Paid</td>
-                <td style="padding:14px 16px;font-size:20px;font-weight:900;color:#00ff1e;letter-spacing:-0.5px;">${he(amountFmt)}</td>
+                <td style="padding:14px 16px;font-size:20px;font-weight:900;color:#0000ee;letter-spacing:-0.5px;">${he(amountFmt)}</td>
               </tr>
             </table>
           </td>

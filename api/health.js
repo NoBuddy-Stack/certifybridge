@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         setTimeout(() => reject(new Error('MongoDB connection timeout')), 3000)
       ),
     ]);
-    await client.db('astra_forge').command({ ping: 1 });
+    await client.db('certifybridge').command({ ping: 1 });
     checks.mongodb = 'ok';
   } catch (err) {
     checks.mongodb = 'error: ' + err.message;

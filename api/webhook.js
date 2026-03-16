@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
     try {
       const client = await clientPromise;
-      const col    = client.db('astra_forge').collection('applications');
+      const col    = client.db('certifybridge').collection('applications');
 
       await ensureIndexes(col);
 
