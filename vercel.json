@@ -3,7 +3,6 @@
   "regions": ["bom1"],
   "outputDirectory": "public",
   "routes": [
-    { "src": "/",      "dest": "/apply.html" },
     { "src": "/apply", "dest": "/apply.html" }
   ],
   "functions": {
