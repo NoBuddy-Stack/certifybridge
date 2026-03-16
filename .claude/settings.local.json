@@ -40,7 +40,20 @@
       "Bash(cd \"C:\\\\Users\\\\Dell\\\\Desktop\\\\cf\" && rm -rf \"C:UsersDellDesktopcftodos\" && echo \"misnamed folder removed\")",
       "Bash(cd \"C:\\\\Users\\\\Dell\\\\Desktop\\\\cf\" && mv \"Astra Forge – Framer SaaS Template.html\" \"certifybridge-landing-template.html\" && mv \"Astra Forge – Framer SaaS Template_files\" \"certifybridge-landing-template_files\" && echo \"renamed\")",
       "Bash(cd \"C:\\\\Users\\\\Dell\\\\Desktop\\\\cf\" && cp branding-kit/favicon.jpg public/favicon.jpg && echo \"favicon copied\")",
-      "Bash(cd \"C:\\\\Users\\\\Dell\\\\Desktop\\\\cf\" && \\\\\n  sed -i 's|/astra_forge?|/certifybridge?|g; s/AstraForge/CertifyBridge/g' .env .env.example && \\\\\n  sed -i 's/contact@astraforge\\\\.com/contact@certifybridge.com/g' public/apply.html && \\\\\n  echo \"fixed\")"
+      "Bash(cd \"C:\\\\Users\\\\Dell\\\\Desktop\\\\cf\" && \\\\\n  sed -i 's|/astra_forge?|/certifybridge?|g; s/AstraForge/CertifyBridge/g' .env .env.example && \\\\\n  sed -i 's/contact@astraforge\\\\.com/contact@certifybridge.com/g' public/apply.html && \\\\\n  echo \"fixed\")",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(netstat:*)",
+      "Bash(cmd.exe /c \"for /f \\\\\"tokens=5\\\\\" %a in \\('netstat -ano ^| findstr :3000 ^| findstr LISTENING'\\) do taskkill /PID %a /F\")",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/Dell/Desktop/cf/**)",
+      "Bash(done)",
+      "Bash(cd:*)",
+      "Bash(git add:*)"
     ]
   }
 }
