@@ -10,10 +10,15 @@
 
 import { requireAdmin } from '../../lib/adminAuth.js';
 import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, ensureIndexes } from '../../lib/mongodb.js';
-import { ALL_STATUSES } from '../../lib/admin-transitions.js';
-import { PLANS } from '../../lib/plans.js';
+import { buildAdminFilter } from '../../lib/admin-filters.js';
 
 const MAX_ROWS = 5000;
+
+const PROJECTION = {
+  ipAddress: 0,
+  consentTimestamp: 0,
+  razorpaySignature: 0,
+};
 
 const COLUMNS = [
   { key: 'firstName',         label: 'First Name' },
@@ -45,9 +50,13 @@ const COLUMNS = [
 /** RFC 4180: escape fields containing comma, double-quote, or newline */
 function csvField(val) {
   if (val == null) return '';
-  const str = val instanceof Date
+  let str = val instanceof Date
     ? val.toISOString()
     : String(val);
+  // Defang formula injection (Excel/LibreOffice interpret =, +, -, @ as formulas)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str;
+  }
   if (/[",\r\n]/.test(str)) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
@@ -62,53 +71,8 @@ export default async function handler(req, res) {
 
   if (!requireAdmin(req, res)) return;
 
-  const { plan, status, search, dateFrom, dateTo } = req.query || {};
-
-  // ── Build filter (same logic as applications.js) ──────────────────────────
-  const filter = {};
-
-  if (plan && Object.prototype.hasOwnProperty.call(PLANS, plan)) {
-    filter.plan = plan;
-  }
-
-  if (status && ALL_STATUSES.includes(status)) {
-    if (status === 'paid') {
-      filter.adminStatus = { $in: ['paid', null] };
-    } else {
-      filter.adminStatus = status;
-    }
-  }
-
-  if (search && typeof search === 'string') {
-    const term = search.trim().slice(0, 200);
-    if (term) {
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      filter.$or = [
-        { firstName:        { $regex: escaped, $options: 'i' } },
-        { lastName:         { $regex: escaped, $options: 'i' } },
-        { email:            { $regex: escaped, $options: 'i' } },
-        { college:          { $regex: escaped, $options: 'i' } },
-        { razorpayOrderId:  { $regex: escaped, $options: 'i' } },
-      ];
-    }
-  }
-
-  if (dateFrom || dateTo) {
-    filter.createdAt = {};
-    if (dateFrom) {
-      const ms = Date.parse(dateFrom);
-      if (!isNaN(ms)) filter.createdAt.$gte = new Date(ms);
-    }
-    if (dateTo) {
-      const ms = Date.parse(dateTo);
-      if (!isNaN(ms)) {
-        const end = new Date(ms);
-        end.setHours(23, 59, 59, 999);
-        filter.createdAt.$lte = end;
-      }
-    }
-    if (Object.keys(filter.createdAt).length === 0) delete filter.createdAt;
-  }
+  // ── Build filter (shared with applications.js) ────────────────────────────
+  const filter = buildAdminFilter(req.query);
 
   // ── Query + build CSV ─────────────────────────────────────────────────────
   try {
@@ -116,7 +80,7 @@ export default async function handler(req, res) {
     const col    = client.db(DB_NAME).collection(COLLECTION_APPLICATIONS);
     await ensureIndexes(col);
 
-    const docs = await col.find(filter)
+    const docs = await col.find(filter, { projection: PROJECTION })
       .sort({ createdAt: -1 })
       .limit(MAX_ROWS)
       .toArray();

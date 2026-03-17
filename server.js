@@ -88,7 +88,7 @@ http.createServer(async (req, res) => {
 
     // Resolve handler: try exact match first, then dynamic [param] segments
     let fn    = handlers[name];
-    const dynQuery = {}; // populated by dynamic segment matching
+    let dynQuery = {}; // populated by dynamic segment matching
 
     if (!fn) {
       // Try matching dynamic routes: e.g. "admin/applications/abc123"
@@ -98,15 +98,16 @@ http.createServer(async (req, res) => {
         const hSegs = handlerName.split('/');
         if (hSegs.length !== segments.length) continue;
         let match = true;
+        const candidateQuery = {};
         for (let i = 0; i < hSegs.length; i++) {
           if (hSegs[i].startsWith('[') && hSegs[i].endsWith(']')) {
-            dynQuery[hSegs[i].slice(1, -1)] = segments[i];
+            candidateQuery[hSegs[i].slice(1, -1)] = segments[i];
           } else if (hSegs[i] !== segments[i]) {
             match = false;
             break;
           }
         }
-        if (match) { fn = handlers[handlerName]; break; }
+        if (match) { fn = handlers[handlerName]; dynQuery = candidateQuery; break; }
       }
     }
 

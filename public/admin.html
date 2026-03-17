@@ -389,17 +389,6 @@ function showToast(msg, isErr) {
     el._t = setTimeout(function() { el.className = 'toast'; }, 3000);
 }
 
-function makeBadge(status) {
-    var color = STATUS_COLORS[status] || '#666';
-    var label = STATUS_LABELS[status] || status;
-    var span = document.createElement('span');
-    span.className = 'status-badge';
-    span.style.color = color;
-    span.style.borderColor = color + '40';
-    span.textContent = label;
-    return span.outerHTML;
-}
-
 // ── Auth ─────────────────────────────────────────────────────────────────────
 function getToken() { return sessionStorage.getItem('adminToken') || ''; }
 
@@ -464,9 +453,8 @@ if (getToken()) {
 }
 
 // ── List ─────────────────────────────────────────────────────────────────────
-function buildQueryString() {
+function buildFilterParams() {
     var params = new URLSearchParams();
-    params.set('page', currentPage);
     var plan   = document.getElementById('f-plan').value;
     var status = document.getElementById('f-status').value;
     var search = document.getElementById('f-search').value.trim();
@@ -477,6 +465,12 @@ function buildQueryString() {
     if (search) params.set('search', search);
     if (from)   params.set('dateFrom', from);
     if (to)     params.set('dateTo', to);
+    return params;
+}
+
+function buildQueryString() {
+    var params = buildFilterParams();
+    params.set('page', currentPage);
     return params.toString();
 }
 
@@ -530,50 +524,48 @@ function renderList(data) {
 
     // Build table rows using DOM methods for safety
     tbody.textContent = '';
-    for (var i = 0; i < applications.length; i++) {
-        (function(idx) {
-            var app = applications[idx];
-            var tr = document.createElement('tr');
-            tr.onclick = function() { openDetail(idx); };
+    for (let i = 0; i < applications.length; i++) {
+        var app = applications[i];
+        var tr = document.createElement('tr');
+        tr.onclick = function() { openDetail(i); };
 
-            var name   = [app.firstName, app.lastName].filter(Boolean).join(' ') || '\u2014';
-            var email  = app.email || '\u2014';
-            var plan   = (app.plan || '').toUpperCase();
-            var status = app.adminStatus || 'paid';
-            var amount = app.amount ? '\u20B9' + Number(app.amount).toLocaleString('en-IN') : '\u2014';
-            var date   = app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014';
+        var name   = [app.firstName, app.lastName].filter(Boolean).join(' ') || '\u2014';
+        var email  = app.email || '\u2014';
+        var plan   = (app.plan || '').toUpperCase();
+        var status = app.adminStatus || 'paid';
+        var amount = app.amount ? '\u20B9' + Number(app.amount).toLocaleString('en-IN') : '\u2014';
+        var date   = app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014';
 
-            var tdName = document.createElement('td');
-            tdName.textContent = name;
-            tr.appendChild(tdName);
+        var tdName = document.createElement('td');
+        tdName.textContent = name;
+        tr.appendChild(tdName);
 
-            var tdEmail = document.createElement('td');
-            tdEmail.textContent = email;
-            tr.appendChild(tdEmail);
+        var tdEmail = document.createElement('td');
+        tdEmail.textContent = email;
+        tr.appendChild(tdEmail);
 
-            var tdPlan = document.createElement('td');
-            tdPlan.textContent = plan;
-            tr.appendChild(tdPlan);
+        var tdPlan = document.createElement('td');
+        tdPlan.textContent = plan;
+        tr.appendChild(tdPlan);
 
-            var tdStatus = document.createElement('td');
-            var badge = document.createElement('span');
-            badge.className = 'status-badge';
-            badge.style.color = STATUS_COLORS[status] || '#666';
-            badge.style.borderColor = (STATUS_COLORS[status] || '#666') + '40';
-            badge.textContent = STATUS_LABELS[status] || status;
-            tdStatus.appendChild(badge);
-            tr.appendChild(tdStatus);
+        var tdStatus = document.createElement('td');
+        var badge = document.createElement('span');
+        badge.className = 'status-badge';
+        badge.style.color = STATUS_COLORS[status] || '#666';
+        badge.style.borderColor = (STATUS_COLORS[status] || '#666') + '40';
+        badge.textContent = STATUS_LABELS[status] || status;
+        tdStatus.appendChild(badge);
+        tr.appendChild(tdStatus);
 
-            var tdAmount = document.createElement('td');
-            tdAmount.textContent = amount;
-            tr.appendChild(tdAmount);
+        var tdAmount = document.createElement('td');
+        tdAmount.textContent = amount;
+        tr.appendChild(tdAmount);
 
-            var tdDate = document.createElement('td');
-            tdDate.textContent = date;
-            tr.appendChild(tdDate);
+        var tdDate = document.createElement('td');
+        tdDate.textContent = date;
+        tr.appendChild(tdDate);
 
-            tbody.appendChild(tr);
-        })(i);
+        tbody.appendChild(tr);
     }
 
     // Pagination
@@ -795,20 +787,8 @@ function doUpdateStatus() {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 function exportCSV() {
-    var params = new URLSearchParams();
-    var plan   = document.getElementById('f-plan').value;
-    var status = document.getElementById('f-status').value;
-    var search = document.getElementById('f-search').value.trim();
-    var from   = document.getElementById('f-from').value;
-    var to     = document.getElementById('f-to').value;
-    if (plan)   params.set('plan', plan);
-    if (status) params.set('status', status);
-    if (search) params.set('search', search);
-    if (from)   params.set('dateFrom', from);
-    if (to)     params.set('dateTo', to);
-
     showToast('Exporting...');
-    apiFetch('/api/admin/export?' + params.toString())
+    apiFetch('/api/admin/export?' + buildFilterParams().toString())
         .then(function(res) {
             if (!res.ok) throw new Error('Export failed');
             return res.blob();
