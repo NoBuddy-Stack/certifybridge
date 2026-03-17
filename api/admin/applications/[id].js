@@ -11,7 +11,7 @@
 
 import { ObjectId } from 'mongodb';
 import { requireAdmin } from '../../../lib/adminAuth.js';
-import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, ensureIndexes } from '../../../lib/mongodb.js';
+import clientPromise, { DB_NAME, COLLECTION_APPLICATIONS, COLLECTION_AUDIT_LOG, ensureIndexes } from '../../../lib/mongodb.js';
 import { isValidTransition, TRANSITIONS } from '../../../lib/admin-transitions.js';
 import { EMAIL_SENDERS } from '../../../lib/admin-emails.js';
 import { checkRateLimit } from '../../../lib/rate-limit.js';
@@ -40,10 +40,11 @@ export default async function handler(req, res) {
   }
 
   // ── Shared: get collection ──────────────────────────────────────────────────
-  let col;
+  let col, db;
   try {
     const client = await clientPromise;
-    col = client.db(DB_NAME).collection(COLLECTION_APPLICATIONS);
+    db  = client.db(DB_NAME);
+    col = db.collection(COLLECTION_APPLICATIONS);
     await ensureIndexes(col);
   } catch (err) {
     console.error('[admin/applications/[id]] MongoDB error:', err.message);
@@ -157,6 +158,21 @@ export default async function handler(req, res) {
   }
 
   console.log('[admin/applications/[id]] Status updated:', id, currentStatus, '→', newStatus);
+
+  // ── Persistent audit log (fire-and-forget) ────────────────────────────────
+  try {
+    const auditCol = db.collection(COLLECTION_AUDIT_LOG);
+    auditCol.insertOne({
+      applicationId: new ObjectId(id),
+      fromStatus:    currentStatus,
+      toStatus:      newStatus,
+      reason:        sanitizedReason || null,
+      adminIp:       ip,
+      timestamp:     new Date(),
+    });
+  } catch (err) {
+    console.error('[admin/applications/[id]] Audit log error (non-blocking):', err.message);
+  }
 
   // ── Trigger email (fire-and-forget) ───────────────────────────────────────
   let emailSent = false;
